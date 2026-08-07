@@ -5,17 +5,17 @@
  * @author Melo (melo@meloprofessional.com)
  * @date 2026/08/06
  * @releasedate 2026/06/06
- * @version 1.6.0.0
+ * @version 1.6.0.100
  ***********************************************************************/
 
 AppName := "Little Stuff"
 ;@Ahk2Exe-Let U_AppName = %A_PriorLine%
-AppVersion := "1.6.0.0"
+AppVersion := "1.6.0.100"
 ;@Ahk2Exe-Let U_Version = %A_PriorLine%
 AppDescription := "A bundle of little snippets, because Power Toys sucks."
 ;@endregion
 
-_bkpMode := "AppVersionAndMinutes"
+;_bkpMode := "AppVersionAndMinutes"
 
 ;@region Directives
 #Requires AutoHotkey v2.0
@@ -154,8 +154,8 @@ AlwaysOnTopStart() {
     OSDAOT.Position := "x0.92 y0.0"
     OSDAOT.TimeOut := 5000
     OSDAOT.MinWidth := 5
-    OSDAOT.MaginX := 5
-    OSDAOT.MaginY := 5
+    OSDAOT.MarginX := 5
+    OSDAOT.MarginY := 10
     try AOTImage := OSDAOT.SetCellImage(1,1, unpin,,20)
 }
 
