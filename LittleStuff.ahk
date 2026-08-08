@@ -3,14 +3,14 @@
 /************************************************************************
  * @description A bundle of little snippets, because Power Toys sucks.
  * @author Melo (melo@meloprofessional.com)
- * @date 2026/08/06
+ * @date 2026/08/08
  * @releasedate 2026/06/06
- * @version 1.6.0.100
+ * @version 1.6.1.100
  ***********************************************************************/
 
 AppName := "Little Stuff"
 ;@Ahk2Exe-Let U_AppName = %A_PriorLine%
-AppVersion := "1.6.0.100"
+AppVersion := "1.6.1.100"
 ;@Ahk2Exe-Let U_Version = %A_PriorLine%
 AppDescription := "A bundle of little snippets, because Power Toys sucks."
 ;@endregion
@@ -29,8 +29,8 @@ A_IconHidden := true
 ;ProcessSetPriority("High")
 ListLines(False)
 KeyHistory(0)
-;A_MaxHotkeysPerInterval := 5000
-;A_HotkeyInterval := 1000
+A_MaxHotkeysPerInterval := 5000
+A_HotkeyInterval := 1000
 ;@endregion
 
 ;@region Includes

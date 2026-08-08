@@ -1,6 +1,6 @@
 /************************************************************************
  * @description OSDCustom (Dynamic Styling & Multi-Column Grid Engine)
- * @version 6.15.0 (Default Text for show )
+ * @version 6.16.0 (Default Text for show at cell "2,1")
  ***********************************************************************/
 
 #Requires AutoHotkey v2.0
@@ -231,11 +231,13 @@ class OSDCustom {
             this.ProgressValue := Progress
 
         if !IsSet(Text) && (this.Cells.Length == 0) {
-            this.SetCellText(2, 2, A_LineFile, "Center")
+            this.SetCellText(2, 1, A_LineFile, "Center")
         }
 
         if IsSet(Text) {
-            this.SetCellText(2, 2, Text, "Center")
+			if this.Cells.Length == 1
+				this.ClearCells()
+            this.SetCellText(2, 1, Text, "Center")
         }
 
         if (this.MyGui) {
