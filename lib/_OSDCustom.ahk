@@ -1,6 +1,6 @@
 /************************************************************************
  * @description OSDCustom (Dynamic Styling & Multi-Column Grid Engine)
- * @version 6.16.0 (Default Text for show at cell "2,1")
+ * @version 6.20.0 (ProgressBar Width)
  ***********************************************************************/
 
 #Requires AutoHotkey v2.0
@@ -33,6 +33,7 @@ class OSDCustom {
     static Opacity := 245
     static RoundedCorners := 15
     static ProgressMaxValue := 100
+    static ProgressBarWidth := 100
     static ProgressBarHeight := 6
 
     ; Backward-compat: used only when no SetCellProgress cell is defined
@@ -58,6 +59,8 @@ class OSDCustom {
     static DWMCompatible {
         get => (VerCompare(A_OSVersion, OSDCustom.DWMMinVer) >= 0)
     }
+
+	static DPIScale(val) => Round(val * (A_ScreenDPI / 96))
 
     __Get(name, args) {
         if OSDCustom.HasProp(name)
@@ -98,7 +101,20 @@ class OSDCustom {
     }
 
     ; --- Cell definition methods ---
-
+	/**
+	* @description {`SetCellText()`}
+	* Set a cell as a text with positioning and styling options.
+	* @param {(Integer)} [column]
+	* @param {(Integer)} [row]
+	* @param {(String)} [text]
+	* @param {(String)} [aligment]
+	* @param {(Object)} [style]
+	* @param {(Integer)} [columnSpan]
+	* @param {(Integer)} [rowSpan]
+	* @returns {(Object)}
+	* @example <caption>Set cell text at column 2 row 1 with a 'message', horizontal aligment Center, Styling as (fontname Consolas, font size 12, font color CCCCCC, font weight 100) and spanning by 3 rows.</caption>
+	* MyOSD.SetCellText(2, 1, "message", "Center", "{FontName: "Consolas", FontSize: 12, FontColor: "CCCCCC", FontWeight: 100 }", 1, 3)
+	*/
     SetCellText(col, row, text, alignment := "Left", styleObj := "", colSpan := 1, rowSpan := 1) {
         textObj := { Type: "Text", Col: col, Row: row, Text: text, Align: alignment, Style: styleObj, ColSpan: colSpan, RowSpan: rowSpan }
         this.Cells.Push(textObj)
@@ -186,6 +202,8 @@ class OSDCustom {
                             textColor := info.Style.ColorLight
                         else if (!isLight && info.Style.HasProp("ColorDark"))
                             textColor := info.Style.ColorDark
+                        else if (info.Style.HasProp("FontColor"))
+                            textColor := info.Style.FontColor
                     }
                     try ctrl.SetFont("c" textColor)
                 }
@@ -248,8 +266,15 @@ class OSDCustom {
         this.MyGui := Gui(this.Options, this.Title)
         this.MyGui.OnEvent("Close", (*) => this.Destroy())
 
-        this.MyGui.MarginX := this.MarginX
-        this.MyGui.MarginY := this.MarginY
+        ; --- APPLY DPI SCALING TO BASE LAYOUT VARIABLES ---
+        scaledMarginX  := OSDCustom.DPIScale(this.MarginX)
+        scaledMarginY  := OSDCustom.DPIScale(this.MarginY)
+        scaledRowGap   := OSDCustom.DPIScale(this.RowGap)
+        scaledMaxWidth := OSDCustom.DPIScale(this.MaxWidth)
+        scaledMinWidth := OSDCustom.DPIScale(this.HasProp("MinWidth") ? this.MinWidth : OSDCustom.MinWidth)
+        
+        this.MyGui.MarginX := scaledMarginX
+        this.MyGui.MarginY := scaledMarginY
 
         hasProgressCell := false
         for cell in this.Cells {
@@ -284,19 +309,26 @@ class OSDCustom {
             reqColW[A_Index] := 0
 
         for cell in this.Cells {
-            if (cell.Type == "Progress" || cell.ColSpan > 1)
+            ;if (cell.Type == "Progress" || cell.ColSpan > 1)
+			if (cell.ColSpan > 1)
                 continue
 
             w := 0
-            if (cell.Type == "Image") {
-                dims := this.GetImageDims(cell.Path, cell.TargetH)
-                w := dims.W + 16 
+			if (cell.Type == "Progress") {
+		        ;w := OSDCustom.DPIScale(100) ; Default pixel width for single-column progress bars
+		        w := OSDCustom.DPIScale(this.ProgressBarWidth) ; Default pixel width for single-column progress bars
+            } else if (cell.Type == "Image") {
+                dims := this.GetImageDims(cell.Path, OSDCustom.DPIScale(cell.TargetH))
+                ;w := dims.W + OSDCustom.DPIScale(8)
+                w := dims.W + OSDCustom.DPIScale(this.RowGap)
             } else {
                 fName := (IsObject(cell.Style) && cell.Style.HasProp("FontName")) ? cell.Style.FontName : this.FontName
                 fSize := (IsObject(cell.Style) && cell.Style.HasProp("FontSize")) ? cell.Style.FontSize : this.FontSize
+                fColor := (IsObject(cell.Style) && cell.Style.HasProp("FontColor")) ? cell.Style.FontColor : this.GetCurrentThemeColor("TextDefault")
                 FWeight := (IsObject(cell.Style) && cell.Style.HasProp("FontWeight")) ? cell.Style.FontWeight : this.FontWeight
-                bounds := this.CalculateTextSize(cell.Text, fName, fSize, FWeight, this.MaxWidth)
-                w := bounds.W + 8 
+                bounds := this.CalculateTextSize(cell.Text, fName, fSize, FWeight, scaledMaxWidth)
+                ;w := bounds.W + OSDCustom.DPIScale(8)
+                w := bounds.W + OSDCustom.DPIScale(this.RowGap)
             }
             if (w > reqColW[cell.Col])
                 reqColW[cell.Col] := w
@@ -308,8 +340,8 @@ class OSDCustom {
 
         if (totalReqW == 0) {
             loop maxCol {
-                reqColW[A_Index] := 10
-                totalReqW += 10
+                reqColW[A_Index] := OSDCustom.DPIScale(10)
+                totalReqW += OSDCustom.DPIScale(10)
             }
         }
 
@@ -317,12 +349,15 @@ class OSDCustom {
             if (cell.Type != "Progress" && cell.ColSpan > 1) {
                 w := 0
                 if (cell.Type == "Image") {
-                    w := this.GetImageDims(cell.Path, cell.TargetH).W + 16
+                    ;w := this.GetImageDims(cell.Path, OSDCustom.DPIScale(cell.TargetH)).W + OSDCustom.DPIScale(16)
+                    w := this.GetImageDims(cell.Path, OSDCustom.DPIScale(cell.TargetH)).W + OSDCustom.DPIScale(this.RowGap)
                 } else {
                     fName := (IsObject(cell.Style) && cell.Style.HasProp("FontName")) ? cell.Style.FontName : this.FontName
                     fSize := (IsObject(cell.Style) && cell.Style.HasProp("FontSize")) ? cell.Style.FontSize : this.FontSize
+					fColor := (IsObject(cell.Style) && cell.Style.HasProp("FontColor")) ? cell.Style.FontColor : this.GetCurrentThemeColor("TextDefault")
                     FWeight := (IsObject(cell.Style) && cell.Style.HasProp("FontWeight")) ? cell.Style.FontWeight : this.FontWeight
-                    w := this.CalculateTextSize(cell.Text, fName, fSize, FWeight, this.MaxWidth).W + 8
+                    ;w := this.CalculateTextSize(cell.Text, fName, fSize, FWeight, scaledMaxWidth).W + OSDCustom.DPIScale(8)
+                    w := this.CalculateTextSize(cell.Text, fName, fSize, FWeight, scaledMaxWidth).W + OSDCustom.DPIScale(this.RowGap)
                 }
                 if (w > totalReqW) {
                     extraNeeded := w - totalReqW
@@ -334,13 +369,13 @@ class OSDCustom {
             }
         }
 
-        finalGuiWidth := totalReqW + (this.MarginX * 2)
-        if (this.HasProp("MinWidth") && finalGuiWidth < this.MinWidth)
-            finalGuiWidth := this.MinWidth
-        if (finalGuiWidth > this.MaxWidth)
-            finalGuiWidth := this.MaxWidth
+        finalGuiWidth := totalReqW + (scaledMarginX * 2)
+        if (finalGuiWidth < scaledMinWidth)
+            finalGuiWidth := scaledMinWidth
+        if (finalGuiWidth > scaledMaxWidth)
+            finalGuiWidth := scaledMaxWidth
 
-        contentWidth := finalGuiWidth - (this.MarginX * 2)
+        contentWidth := finalGuiWidth - (scaledMarginX * 2)
 
         colWidths := Map()
         distributedW := 0
@@ -358,14 +393,14 @@ class OSDCustom {
         loop maxRow
             rowHeights[A_Index] := 0
 
-        progressBarH := this.ProgressBarHeight
+        progressBarH := OSDCustom.DPIScale(this.ProgressBarHeight)
 
         for cell in this.Cells {
             colKey := colWidths.Has(cell.Col) ? cell.Col : 1
             cellW := (cell.ColSpan >= maxCol) ? contentWidth : colWidths[colKey]
 
             if (cell.Type == "Image") {
-                dims := this.GetImageDims(cell.Path, cell.TargetH)
+                dims := this.GetImageDims(cell.Path, OSDCustom.DPIScale(cell.TargetH))
                 cell.ComputedW := dims.W
                 cell.ComputedH := dims.H
                 if (cell.RowSpan == 1 && rowHeights.Has(cell.Row) && dims.H > rowHeights[cell.Row])
@@ -380,6 +415,7 @@ class OSDCustom {
             } else { 
                 fName := (IsObject(cell.Style) && cell.Style.HasProp("FontName")) ? cell.Style.FontName : this.FontName
                 fSize := (IsObject(cell.Style) && cell.Style.HasProp("FontSize")) ? cell.Style.FontSize : this.FontSize
+				fColor := (IsObject(cell.Style) && cell.Style.HasProp("FontColor")) ? cell.Style.FontColor : this.GetCurrentThemeColor("TextDefault")
                 FWeight := (IsObject(cell.Style) && cell.Style.HasProp("FontWeight")) ? cell.Style.FontWeight : this.FontWeight
                 bounds := this.CalculateTextSize(cell.Text, fName, fSize, FWeight, cellW)
                 cell.ComputedW := bounds.W
@@ -409,19 +445,19 @@ class OSDCustom {
         }
 
         rowY := Map()
-        currentY := this.MarginY
+        currentY := scaledMarginY
         loop maxRow {
             r := A_Index
             rowY[r] := currentY
             if (rowHeights.Has(r))
-                currentY += rowHeights[r] + this.RowGap
+                currentY += rowHeights[r] + scaledRowGap
         }
 
         for idx, cell in this.Cells {
             colKey := colWidths.Has(cell.Col) ? cell.Col : 1
 
             if (cell.ColSpan >= maxCol) {
-                cellX := this.MarginX
+                cellX := scaledMarginX
                 cellW := contentWidth
             } else {
                 currentOffsetX := 0
@@ -429,7 +465,7 @@ class OSDCustom {
                     if (colWidths.Has(A_Index))
                         currentOffsetX += colWidths[A_Index]
                 }
-                cellX := this.MarginX + currentOffsetX
+                cellX := scaledMarginX + currentOffsetX
                 cellW := colWidths[colKey]
             }
 
@@ -442,13 +478,13 @@ class OSDCustom {
                 loop cell.RowSpan {
                     r := cell.Row + A_Index - 1
                     if (rowHeights.Has(r))
-                        cellH += rowHeights[r] + (A_Index < cell.RowSpan ? this.RowGap : 0)
+                        cellH += rowHeights[r] + (A_Index < cell.RowSpan ? scaledRowGap : 0)
                 }
             } else {
-                cellH := rowHeights.Has(cell.Row) ? rowHeights[cell.Row] : 20
+                cellH := rowHeights.Has(cell.Row) ? rowHeights[cell.Row] : OSDCustom.DPIScale(20)
             }
             if (cellH < 1)
-                cellH := 20
+                cellH := OSDCustom.DPIScale(20)
 
             alignOpt := cell.Align == "Right" ? "Right" : (cell.Align == "Center" ? "Center" : "Left")
 
@@ -474,13 +510,9 @@ class OSDCustom {
                 initVal := IsNumber(cell.Value) ? Integer(cell.Value) : pMin
                 initVal := Max(pMin, Min(pMax, initVal))
 
-                ; --- CUSTOM HEIGHT CORRECTION ---
-                ; Pull custom height from class settings, otherwise default to 6 pixels
-                barH := (this.HasProp("ProgressBarHeight") && this.ProgressBarHeight > 0) ? this.ProgressBarHeight : 6
-                
-                ; Calculate centered vertical offset relative to the row's total text height
+                ; Apply scaling to custom progress bar heights
+                barH := OSDCustom.DPIScale((this.HasProp("ProgressBarHeight") && this.ProgressBarHeight > 0) ? this.ProgressBarHeight : 6)
                 barY := (cellY + (cellH - barH) / 2) + 1
-                ; --------------------------------
 
                 ctrl := this.MyGui.AddProgress(
                     "x" cellX " y" barY " w" cellW " h" barH
@@ -493,8 +525,9 @@ class OSDCustom {
             } else {  
                 fName := (IsObject(cell.Style) && cell.Style.HasProp("FontName")) ? cell.Style.FontName : this.FontName
                 fSize := (IsObject(cell.Style) && cell.Style.HasProp("FontSize")) ? cell.Style.FontSize : this.FontSize
+				fColor := (IsObject(cell.Style) && cell.Style.HasProp("FontColor")) ? cell.Style.FontColor : this.GetCurrentThemeColor("TextDefault")
                 FWeight := (IsObject(cell.Style) && cell.Style.HasProp("FontWeight")) ? cell.Style.FontWeight : this.FontWeight
-                this.MyGui.SetFont("s" fSize " w" FWeight, fName)
+                this.MyGui.SetFont("s" fSize " c" fColor " w" FWeight, fName)
                 
                 ; --- CUSTOM TEXT VERTICAL CENTERING ---
                 ; Calculate centered vertical offset relative to the row's total height
@@ -509,7 +542,7 @@ class OSDCustom {
         if (autoInsertedProgress)
             this.Cells.Pop()
 
-        finalGuiHeight := currentY - this.RowGap + this.MarginY
+        finalGuiHeight := currentY - scaledRowGap + scaledMarginY
 
         this.InternalState := "Ready"
         this.ApplyThemeColors()
@@ -568,11 +601,15 @@ class OSDCustom {
             targetY := monTop + (monHeight * Float(matchY[1]))
         }
 
+        ; Calculate slide distance properly for DPI
+        scaledSlide := OSDCustom.DPIScale(this.SlideDistance)
+        this.ActualSpeed := OSDCustom.DPIScale(this.Speed)
+
         this.PosX := Max(monLeft, Min(targetX - Integer(guiWidth / 2), monRight - guiWidth))
         this.FinalY := Max(monTop, Min(targetY - Integer(guiHeight / 2), monBottom - guiHeight))
         this.IsBottomHalf := (this.FinalY >= (monTop + (monHeight / 2) - guiHeight / 2))
-        this.StartY := this.IsBottomHalf ? (this.FinalY + this.SlideDistance) : (this.FinalY - this.SlideDistance)
-        this.AlphaStep := this.Opacity / (this.SlideDistance / this.Speed)
+        this.StartY := this.IsBottomHalf ? (this.FinalY + scaledSlide) : (this.FinalY - scaledSlide)
+        this.AlphaStep := this.Opacity / (scaledSlide / this.ActualSpeed)
 
         hwnd := this.MyGui.Hwnd
         if (this.State == "Hidden" || this.State == "SlidingOut") {
@@ -800,7 +837,7 @@ class OSDCustom {
         try {
             hdc := DllCall("GetDC", "Ptr", 0, "Ptr")
             if (!hdc)
-                return { W: maxW, H: 20 }
+                return { W: maxW, H: OSDCustom.DPIScale(20) }
 
             logPixelsY := DllCall("GetDeviceCaps", "Ptr", hdc, "Int", 90)
             if (!logPixelsY)
@@ -815,7 +852,7 @@ class OSDCustom {
 
             if (!hFont) {
                 DllCall("ReleaseDC", "Ptr", 0, "Ptr", hdc)
-                return { W: maxW, H: 20 }
+                return { W: maxW, H: OSDCustom.DPIScale(20) }
             }
 
             obm := DllCall("SelectObject", "Ptr", hdc, "Ptr", hFont, "Ptr")
@@ -827,7 +864,7 @@ class OSDCustom {
             return { W: NumGet(RECT, 8, "Int") - NumGet(RECT, 0, "Int"),
                 H: NumGet(RECT, 12, "Int") - NumGet(RECT, 4, "Int") }
         } catch {
-            return { W: maxW, H: 20 }
+            return { W: maxW, H: OSDCustom.DPIScale(20) }
         }
     }
 
@@ -970,17 +1007,110 @@ class OSDCustom {
     }
 }
 
-/*
-* EXAMPLES
+
+; ------------------------------------------------------------------------------
+; HOW TO USE
+; ------------------------------------------------------------------------------
+
+; _HOWTOUSEOSDCUSTOM()
+
+_HOWTOUSEOSDCUSTOM() {
+	; First create an object (ie MYOSD) initiating the Class
+		MYOSD := OSDCustom()
+
+	; Now lets create a text cell with SetCellText(col, row, text, alignment := "Left", styleObj := "", colSpan := 1, rowSpan := 1)
+		MYOSD.SetCellText(1, 1, "My text to show")	; text cell at column 1, row 1
+
+	; Lets also create a text cell that can be updated 'on-the-fly' later.
+	; First assign a cell to an object (ie myText1)
+	; Later we will be updating it's content
+		myText1 := MYOSD.SetCellText(1, 2, "This text will be updated later")	; text cell at column 1, row 2
+
+	; Lets create a image cell with SetCellImage(col, row, imagePath, alignment := "Center", targetHeight := 54, colSpan := 1, rowSpan := 1)
+		MYOSD.SetCellImage(2, 2, A_ScriptDir "\shield.png", , 64)	; at column 2, row 2, image from file imagePath and 256 px size
+
+	; Lets create a ProgressBar with SetCellProgress(col := 1, row := this.ProgressBarRow, value := 0, alignment := "Center", range := "", colSpan := 999, rowSpan := 1)
+		; range can be: "-50-100", [-50, 100], {Min:-50, Max:100}, or just 500 (meaning 0 to 500)
+		MYOSD.SetCellProgress(1, 3, 100, , [-500, 500])	; Progress bar at column 1 and row 3, with value 100 and range from -500 to +500
+
+	; Now lets show the OSD with Show(Text?, Position := "", TimeOut := "", Progress := "")
+		MYOSD.Show(, Position := "x0.5 y0.9")	; show current cells at X 50% and Y 90% of the screen
+
+	; A little sleep to later update the cell myText1
+	Sleep(1000)
+
+	; Now lets update that text cell 'on-the-fly',
+	; with UpdateTextObject(cellObj, newText, TimeOut := "")
+		MYOSD.UpdateTextObject(myText1, "New Text")
+
+	; The same update technique applies to Images and ProgressBar
+		; MYOSD.UpdateProgressObject(progressObj, newValue, TimeOut := "")
+		; MYOSD.UpdateImageObject(imageObj, newImagePath, TimeOut := "")
+
+	; If you need anytime to cleanup cells
+		; MYOSD.ClearCells()
+	; If you need instant Destroy, not waiting default timeout, you can
+		; MYOSD.Destroy()
+}
 
 
 
-ThemeIcon := A_ScriptDir "\windowstheme7.ico"
+/* 
+; ------------------------------------------------------------------------------
+; EXAMPLES
+; ------------------------------------------------------------------------------
+
+
+; ------------------------------------------------------------------------------
+; SIMPLE
+; ------------------------------------------------------------------------------
+
+Simple := OSDCustom()	; initiate OSD instance
+Simple.Show("Simple OSD!")
+
+
+; ------------------------------------------------------------------------------
+; TOOLTIP AT MOUSE POSITION
+; ------------------------------------------------------------------------------
+
+;	TOOLTIP USING OSD CUSTOM
+tt := OSDCustom()	; initiate OSD instance
+
+; Tooltip Preset - lets customize it!
+tt.FontSize := 9
+tt.Opacity := 255
+tt.SlideDistance := 1
+tt.MarginX := 5
+tt.MarginY := 5
+tt.TimeOut := 3500
+
+; Show a tooltip at mouse position
+tt.Show("OSD Tooltip!", MousePosition())
+
+MousePosition() {
+    CoordMode("Mouse")
+    MouseGetPos(&mouseX, &mouseY)
+    xPct := Round((mouseX / A_ScreenWidth) + 0.02, 2) ; (little offset upwards)
+    yPct := Round((mouseY / A_ScreenHeight) - 0.02, 2) ; (little offset upwards)
+	xPct := max(0, min(1, xPct))
+	yPct := max(0, min(1, yPct))
+    return "x" . xPct . " y" . yPct
+}
+
+
+; ------------------------------------------------------------------------------
+; 3 OSDs at same time with different presets and contents
+; ------------------------------------------------------------------------------
+
+ThemeIcon := A_ScriptDir "\key.ico"
 ShieldIcon := A_ScriptDir "\shield.png"
 
-MyOSD1 := OSDCustom("My First OSD in Light Mode")
+MyOSD1 := OSDCustom()
 MyOSD1.Theme := "Light"
-MyOSD2 := OSDCustom("Another OSD with default settings")
+
+MyOSD2 := OSDCustom()
+MyOSD2.Opacity := 200
+
 MyOSD3 := OSDCustom()
 
 
@@ -992,7 +1122,7 @@ MyOSD3 := OSDCustom()
     MyOSD1.SetCellImage(1, 1, ThemeIcon, "Left", 80,1,3)
     MyOSD1.SetCellText(2, 1, "`nThis is Title 1", "Left",{ FontSize: 13, FontWeight: 1000 })
     MyOSD1.SetCellText(2, 2, "This is a description`nArtist:`tBethoven`nTrack:`tMoonlight Sonata", "Left",,,)
-    MyOSD1.SetCellText(2, 3, " ", "Left",{ FontSize: 1},,)
+    MyOSD1.SetCellText(2, 3, " ", "Left",{ FontSize: 1})
 
 
 
@@ -1000,20 +1130,21 @@ MyOSD3 := OSDCustom()
     MyOSD2.SetCellText(2, 1, "  ", "Left",{ FontSize: 1})
     MyOSD2.SetCellText(2, 2, "This is Title 2", "Left",{ FontSize: 13, FontWeight: 700 })
     MyOSD2.SetCellText(2, 3, "This is a description`nArtist:`tBethoven`nTrack:`tMoonlight Sonata", "Left", { FontSize: 11},,)
-    MyOSD2.SetCellText(2, 4, " ", "Left",{ FontSize: 1},,)
+    MyOSD2.SetCellText(2, 4, " ", "Left",{ FontSize: 1})
  
 
     MyOSD3.SetCellImage(1, 1, ThemeIcon, "Left", 80,1,4)
-    MyOSD3.SetCellText(2, 2, "This is Title 3", "Left",{ FontSize: 16, FontWeight: 500 })
+    MyOSD3.SetCellText(2, 2, "This is Title 3", "Left", {FontSize: 16, FontWeight: 500 })
     MyOSD3.SetCellText(2, 3, "This is a description`nArtist:`tBethoven`nTrack:`tMoonlight Sonata", "Left", { FontSize: 11},,)
-    MyOSD3.SetCellText(2, 4, " ", "Left",{ FontSize: 1},,)
+    MyOSD3.SetCellText(2, 4, " ", "Left", {FontSize: 1})
 
 
 
-    MyOSD1.Show("x0.75 y0.35",5000)
-    MyOSD2.Show("x0.75 y0.5",5000)
-    MyOSD3.Show("x0.75 y0.65",5000)
+    MyOSD1.Show(,"x0.75 y0.35", 5000)
+    MyOSD2.Show(,"x0.75 y0.5", 5000)
+    MyOSD3.Show(,"x0.75 y0.65", 5000)
 }
+
 
 ; ------------------------------------------------------------------------------
 ; HOTKEY: Win + F5 -> Example 1: Basic Modern Handshake Notification
@@ -1030,7 +1161,7 @@ MyOSD3 := OSDCustom()
     TimeElapsed := MyOSD2.SetCellText(1, 4, "Time elapsed: 0s",, { FontSize: 7 })
     MyProgress2 := MyOSD2.SetCellProgress(1, 6, 2500,, secondstocount)
     
-    MyOSD2.Show(, 0)
+    MyOSD2.Show(, , 0)
     
     While (A_TickCount < starttime + secondstocount) {
         CurrentProgress := (A_TickCount - starttime)
@@ -1048,6 +1179,7 @@ MyOSD3 := OSDCustom()
     MyOSD2.UpdateProgressObject(MyProgress1, secondstocount)
     MyOSD2.UpdateProgressObject(MyProgress2, secondstocount, 2000)
 }
+
 
 ; ------------------------------------------------------------------------------
 ; HOTKEY: Win + F6 -> Example 2: Fixed 3-Column Asset Download (No wrapping!)
@@ -1074,7 +1206,7 @@ MyOSD3 := OSDCustom()
     ; Progress bar at row 4, spanning all 3 columns
     MyOSD2.SetCellProgress(1, 4, 0, 3)
 
-    MyOSD2.Show("x0.50 y0.80", 0)
+    MyOSD2.Show(, "x0.50 y0.80", 0)
 
     Loop 10 {
         CurrentProgress := A_Index * 10
@@ -1090,6 +1222,7 @@ MyOSD3 := OSDCustom()
     MyOSD2.UpdateText(2, 3, "", 2000)
     MyOSD2.UpdateProgress(100, 3000)
 }
+
 
 ; ------------------------------------------------------------------------------
 ; HOTKEY: Win + F7 -> Example 3: Wide Split Layout Layout
@@ -1109,8 +1242,9 @@ MyOSD3 := OSDCustom()
     MyOSD1.SetCellProgress(1, 4, 79, 2)
 
     MyOSD1.SetCellText(1, 5, "Press [Esc] to cancel background sync operations", "Center", { FontSize: 10 }, 2)
-    MyOSD1.Show("x0.50 y0.30", 1500)
+    MyOSD1.Show(, "x0.50 y0.30", 1500)
 }
+
 
 ; ------------------------------------------------------------------------------
 ; HOTKEY: Win + F8 -> Example 4: Graphical HUD
@@ -1126,13 +1260,14 @@ MyOSD3 := OSDCustom()
     MyOSD1.SetCellText(2, 1, "WINDOWS SECURITY COMPLIANCE", "Center", { FontSize: 11, FontWeight: 1000 })
     MyOSD1.SetCellText(3, 1, "Verified SEC-ID", "Right", { FontSize: 7 })
     MyOSD1.SetCellText(1, 2, "Environment state matches all DWM kernel policies.", "Left", { FontSize: 10 }, 4)
-    MyOSD1.Show("x0.85 y1", 3000)
+    MyOSD1.Show(, "x0.85 y1", 3000)
 }
+
 
 ; ------------------------------------------------------------------------------
 ; HOTKEY: Volume Up / Down -> Example 5: Windows OSD for Audio Volume
 ; ------------------------------------------------------------------------------
-VolumeOSD := OSDCustom("Volume OSD")
+VolumeOSD := OSDCustom()
 VolumeOSD.MinWidth := 195
 VolumeOSD.Speed := 2.3
 VolumeOSD.MarginX := 16
@@ -1150,9 +1285,8 @@ VolumeOSD.TimeOut := 1775
 
 ; Start the controls
 VolIconObj :=       VolumeOSD.SetCellText(1, 1, " ", "Left", { FontSize: 14, FontWeight: 500 })
-DummyCell:=         VolumeOSD.SetCellText(2, 1, "                                                                                ", "Center", { FontSize: 1})
-VolTextObj :=       VolumeOSD.SetCellText(3, 1, " ", "Right", { FontSize: 10, FontWeight: 500 })
 VolProgressObj :=   VolumeOSD.SetCellProgress(2, 1, 100,,,1)
+VolTextObj :=       VolumeOSD.SetCellText(3, 1, " ", "Right", { FontSize: 10, FontWeight: 500 })
 
 e66 := "🔊"
 e33 := "🔉"
@@ -1187,25 +1321,30 @@ UpdateVolumeOSD() {
     }
 }
 
+
 ; ------------------------------------------------------------------------------
 ; HOTKEY: #F3 -> Example 6: Update image
 ; ------------------------------------------------------------------------------
 ; Initialize OSD Layout structure once at script startup
-Global StatusOSD := OSDCustom("Status Panel")
+Global StatusOSD := OSDCustom()
 StatusOSD.Theme := "Dark"
 
 ; Pre-build a layout grid:
 ; Column 1, Row 1, Spanning 1 Column and 2 Rows
 Global MyImageObj := StatusOSD.SetCellImage(1, 1, ThemeIcon, "Center", 64, 1, 2)
 
-; Column 2, Rows 1 and 2 for labels
-Global TitleObj   := StatusOSD.SetCellText(2, 1, "SYSTEM STATUS", "Left", { FontSize: 12, FontWeight: 700 })
-Global StateObj   := StatusOSD.SetCellText(2, 2, "SECURITY: LOCKED", "Left", { FontSize: 10 })
+; Column 2, Rows 1 and 2 for placeholders (empty space)
+StatusOSD.SetCellText(2, 1, " ", "Left", { FontSize: 12, FontWeight: 700 })
+StatusOSD.SetCellText(2, 2, " ", "Left", { FontSize: 10 })
+
+; Column 3, Rows 1 and 2 for labels
+Global TitleObj   := StatusOSD.SetCellText(3, 1, "SYSTEM STATUS", "Left", { FontSize: 12, FontWeight: 700 })
+Global StateObj   := StatusOSD.SetCellText(3, 2, "SECURITY: LOCKED", "Left", { FontSize: 10 })
 
 #F3:: {
     ; First-time open
     if (!StatusOSD.IsVisible) {
-        StatusOSD.Show("x0.50 y0.85", 2000)
+        StatusOSD.Show(,"x0.50 y0.85", 2000)
         return
     }
     
@@ -1219,4 +1358,4 @@ Global StateObj   := StatusOSD.SetCellText(2, 2, "SECURITY: LOCKED", "Left", { F
     }
 }
 
-*/
+ */
