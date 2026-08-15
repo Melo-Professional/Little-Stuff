@@ -3,14 +3,14 @@
 /************************************************************************
  * @description A bundle of little snippets, because Power Toys sucks.
  * @author Melo (melo@meloprofessional.com)
- * @date 2026/08/12
+ * @date 2026/08/15
  * @releasedate 2026/06/06
- * @version 1.7.0.100
+ * @version 1.7.2.0
  ***********************************************************************/
 
 AppName := "Little Stuff"
 ;@Ahk2Exe-Let U_AppName = %A_PriorLine%
-AppVersion := "1.7.0.100"
+AppVersion := "1.7.2.0"
 ;@Ahk2Exe-Let U_Version = %A_PriorLine%
 AppDescription := "A bundle of little snippets, because Power Toys sucks."
 ;@endregion
@@ -36,12 +36,13 @@ A_HotkeyInterval := 1000
 ;@region Includes
 #Include *i <_CompilerDirectives>
 #Include *i <_Backup>
+#Include *i <_HelperFuncs>
 #Include *i <_Config&Vars>
-#Include *i <_MsgBoxCustom>
 #Include *i <_SaveSettings>
 #Include *i <_Theme>
 ;#Include *i <_FrostedTheme>
 ;#Include *i <_TitleBar>
+#Include *i <_GuiTracker>
 ;#Include *i <_ModernSlider>
 ;#Include *i <_Color_Picker_Dialog>
 ;#Include *i <_ReloadWithArgs>
@@ -308,39 +309,6 @@ LoupeHandler(direction) {
 #HotIf
 
 
-
-/* 
-SoundPlayWin(audiofile := "Windows Notify", timer := 3000) {
-
-    if !InStr(audiofile, "\")
-        audiofile := A_WinDir "\Media\" audiofile ".wav"
-
-    try SoundPlay(audiofile)
-    SetTimer(ReleaseFile,-timer)
-    ReleaseFile(){
-    try SoundPlay("NON-EXISTENT.wav")  ; releases previously played file from "in use"
-  }
-}
- */
-
-SoundPlayWin(audiofile := "Windows Notify", timer := 3000) {
-    ; If relative/short name passed, resolve to standard Windows Media path
-    if !InStr(audiofile, "\")
-        audiofile := A_WinDir "\Media\" audiofile ".wav"
-
-    ; SND_FILENAME (0x20000) | SND_ASYNC (0x1) | SND_NODEFAULT (0x2) = 0x20003
-    ; Plays sound in background and avoids error beeps if file is missing
-    try DllCall("Winmm.dll\PlaySoundW", "Str", audiofile, "Ptr", 0, "UInt", 0x20003)
-
-    ; Schedule file release if timer is provided
-    if (timer > 0)
-        SetTimer(ReleaseFile, -timer)
-
-    ReleaseFile() {
-        ; Passing 0 as the path cleanly stops playback and releases file handles
-        try DllCall("Winmm.dll\PlaySoundW", "Ptr", 0, "Ptr", 0, "UInt", 0x0)
-    }
-}
 
 ;@region Win D
 /*  WINDOWS + D = CURRENT MONITOR ONLY */
