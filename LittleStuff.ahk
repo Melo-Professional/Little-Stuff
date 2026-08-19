@@ -3,14 +3,14 @@
 /************************************************************************
  * @description A bundle of little snippets, because Power Toys sucks.
  * @author Melo (melo@meloprofessional.com)
- * @date 2026/08/15
+ * @date 2026/08/18
  * @releasedate 2026/06/06
- * @version 1.7.2.0
+ * @version 1.7.3.101
  ***********************************************************************/
 
 AppName := "Little Stuff"
 ;@Ahk2Exe-Let U_AppName = %A_PriorLine%
-AppVersion := "1.7.2.0"
+AppVersion := "1.7.3.101"
 ;@Ahk2Exe-Let U_Version = %A_PriorLine%
 AppDescription := "A bundle of little snippets, because Power Toys sucks."
 ;@endregion
@@ -36,9 +36,9 @@ A_HotkeyInterval := 1000
 ;@region Includes
 #Include *i <_CompilerDirectives>
 #Include *i <_Backup>
-#Include *i <_HelperFuncs>
-#Include *i <_Config&Vars>
 #Include *i <_SaveSettings>
+#Include *i <_Config&Vars>
+#Include *i <_HelperFuncs>
 #Include *i <_Theme>
 ;#Include *i <_FrostedTheme>
 ;#Include *i <_TitleBar>
@@ -68,23 +68,23 @@ A_HotkeyInterval := 1000
 ;@endregion
 
 ;@region Startup
-; SPLASHSCREEN
-if IsSet(SplashScreen){
-    SplashScreen("Icon")
+if !A_Args.Length {
+	if IsSet(SplashScreen) {
+	    SplashScreen()
+	} else if isSet(SplashScreenOSD) {
+		SplashScreenOSD()
+	}
 }
 
-; TRAY ICON + MENU
-StartMenu()
-Menu_Custom()
+IsSet(StartMenu) ? StartMenu() : 0
+IsSet(Menu_Custom) ? Menu_Custom() : 0
+IsSet(StartAutoUpdater) ? StartAutoUpdater() : 0
+;@endregion
+;@endregion
+
 if IsSet(Menu_Custom2) && priv{
     Menu_Custom2()
 }
-if IsSet(StartAutoUpdater) {
-	%"StartAutoUpdater"%()
-}
-;@endregion
-;@endregion
-
 ;throw Error('Message', A_ThisFunc, )
 ;a := "test"
 ;OutputDebug(a) ; debug tab
@@ -309,7 +309,6 @@ LoupeHandler(direction) {
 #HotIf
 
 
-
 ;@region Win D
 /*  WINDOWS + D = CURRENT MONITOR ONLY */
 $#d:: {
@@ -329,7 +328,6 @@ $#d:: {
     Loop monitorCount {
         MonitorGet(A_Index, &curLeft, &curTop, &curRight, &curBottom)
         
-        ; Store monitor 1 bounds as fallback in case mouse isn't matched
         if (A_Index == 1) {
             mLeft := curLeft, mTop := curTop, mRight := curRight, mBottom := curBottom
         }
@@ -347,25 +345,39 @@ $#d:: {
     ; 2. Scan for visible windows on target monitor
     visibleWindowsOnMonitor := []
     
-	for hwnd in WinGetList() {
-        ; 1. FASTEST & HIGHEST ELIMINATION: Drop minimized windows first (pure integer check)
-        if (WinGetMinMax("ahk_id " hwnd) == -1)
+    for hwnd in WinGetList() {
+        ; 1. FASTEST & HIGHEST ELIMINATION: Drop minimized windows
+        try {
+            if (WinGetMinMax("ahk_id " hwnd) == -1)
+                continue
+        } catch {
+            continue
+        }
+
+        ; 2. VERY FAST BITWISE CHECK: Filter tool windows / popups
+        try exStyle := WinGetExStyle("ahk_id " hwnd)
+        catch
             continue
 
-        ; 2. VERY FAST BITWISE CHECK: Filter tool windows / popups before fetching strings
-        exStyle := WinGetExStyle("ahk_id " hwnd)
         if (exStyle & 0x00000080 && !(exStyle & 0x00040000)) ; WS_EX_TOOLWINDOW without WS_EX_APPWINDOW
             continue
 
-        ; 3. STRING CHECKS: Only extract strings if window passed basic style/minmax filters
-        title := WinGetTitle("ahk_id " hwnd)
+        ; 3. STRING CHECKS
+        try title := WinGetTitle("ahk_id " hwnd)
+        catch
+            continue
+
         if (title == "")
             continue
 
-        winClass := WinGetClass("ahk_id " hwnd)
+        try winClass := WinGetClass("ahk_id " hwnd)
+        catch
+            continue
+
         if (winClass == "Progman" || winClass == "WorkerW" 
             || winClass == "Shell_TrayWnd" || winClass == "Shell_SecondaryTrayWnd" 
-            || winClass == "Windows.UI.Core.CoreWindow")
+            || winClass == "Windows.UI.Core.CoreWindow"
+            || winClass == "ParsecOverlay")
             continue
 
         ; 4. HEAVY DLL CALL 1: Filter owned/child popups
@@ -375,44 +387,59 @@ $#d:: {
         ; 5. HEAVY DLL CALL 2: Filter DWM Cloaked windows (Virtual Desktops / UWP)
         try {
             isCloaked := 0
-            DllCall("dwmapi\DwmGetWindowAttribute", "ptr", hwnd, "uint", 14, "uint*", &isCloaked, "uint", 4)
-            if (isCloaked)
-                continue
+            if (DllCall("dwmapi\DwmGetWindowAttribute", "ptr", hwnd, "uint", 14, "uint*", &isCloaked, "uint", 4) == 0) {
+                if (isCloaked)
+                    continue
+            }
+        } catch {
         }
 
-        ; 6. GEOMETRY CHECK: Query window position last, only for surviving candidates
-        WinGetPos &X, &Y, &W, &H, "ahk_id " hwnd
-        winCenterX := X + (W / 2)
-        winCenterY := Y + (H / 2)
+        ; 6. GEOMETRY CHECK
+        try {
+            WinGetPos &X, &Y, &W, &H, "ahk_id " hwnd
+            winCenterX := X + (W / 2)
+            winCenterY := Y + (H / 2)
 
-        if (winCenterX >= mLeft && winCenterX <= mRight && winCenterY >= mTop && winCenterY <= mBottom) {
-            visibleWindowsOnMonitor.Push(hwnd)
+            if (winCenterX >= mLeft && winCenterX <= mRight && winCenterY >= mTop && winCenterY <= mBottom) {
+                visibleWindowsOnMonitor.Push(hwnd)
+            }
         }
     }
 
     ; 3. Decision Logic
-    if (visibleWindowsOnMonitor.Length > 0) {
-        HiddenWindows[targetMonitor] := visibleWindowsOnMonitor
-        
-        for hwnd in visibleWindowsOnMonitor {
-            try WinMinimize("ahk_id " hwnd)
+    hasStoredHiddenWindows := False
+    if (HiddenWindows[targetMonitor].Length > 0) {
+        for storedHwnd in HiddenWindows[targetMonitor] {
+            if WinExist("ahk_id " storedHwnd) && (WinGetMinMax("ahk_id " storedHwnd) == -1) {
+                hasStoredHiddenWindows := True
+                break
+            }
         }
-    } 
-    else if (HiddenWindows[targetMonitor].Length > 0) {
+    }
+
+    if (hasStoredHiddenWindows) {
         Loop HiddenWindows[targetMonitor].Length {
             hwnd := HiddenWindows[targetMonitor][HiddenWindows[targetMonitor].Length - A_Index + 1]
             if WinExist("ahk_id " hwnd) {
                 try WinRestore("ahk_id " hwnd)
 
-				if A_Index > (HiddenWindows[targetMonitor].Length - 2)
-					drama += 220
+                if A_Index > (HiddenWindows[targetMonitor].Length - 2)
+                    drama += 220
                 Sleep(drama)
             }
         }
         HiddenWindows[targetMonitor] := []
+    } 
+    else if (visibleWindowsOnMonitor.Length > 0) {
+        HiddenWindows[targetMonitor] := visibleWindowsOnMonitor
+        
+        for hwnd in visibleWindowsOnMonitor {
+            try WinMinimize("ahk_id " hwnd)
+        }
     }
 }
 ;@endregion
+
 
 
 ;@region wRONG cAPS

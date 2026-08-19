@@ -7,13 +7,8 @@
 
 ;@region VARS
 ; CUSTOM VARIABLES
-App.Github := "https://github.com/Melo-Professional/Little-Stuff"
-if (App.HasOwnProp("Github")  && App.Github != "" && App.Github != "https://github.com/Melo-Professional/") {
-	App.UpdateAuto := true
-	App.UpdateFrequencyDays := 3
-	App.UpdateLastCheck := ""
-	SaveToINI.Push("App.UpdateAuto", "App.UpdateFrequencyDays", "App.UpdateLastCheck")
-}
+App.GitHubRepo := "https://github.com/Melo-Professional/Little-Stuff"
+;App.NameCutted			:= "Template`nBigName"
 
 Snippets := {
     SnapWindow:				true,
@@ -31,33 +26,28 @@ Snippets := {
 ;ResetGeneral        := General.Clone()
 ;ResetOSDSettings    := OSDSettings.Clone()
 
-;SaveToINI := [""] ; what to save to INI file
+;Debug := true
+;ResetSettings       := Settings.Clone()
+;ResetGeneral        := General.Clone()
+;ResetOSDSettings    := OSDSettings.Clone()
+Settings.SplashScreen := "Icon"
+;Debug := true
+;@endregion
+
+;@region INI
+SaveToINI := []
+;SaveToINI.Push("Settings.SplashScreen")     ; add more to INI file
+SaveToINI.Push("Snippets.SnapWindow", "Snippets.MBVaio", "Snippets.InternetMonitor", "Snippets.AlwaysOnTop", "Snippets.TheLoupe")     ; add more to INI file
 SaveToINI.Push("Settings.DesiredTheme", "Snippets.SnapWindow", "Snippets.MBVaio",
                 "Snippets.InternetMonitor", "Snippets.AlwaysOnTop", "Snippets.TheLoupe",
                 "Snippets.KDE_Drag", "Snippets.MouseCrossHair", "Snippets.CicleTabsWheel",
 				"Snippets.DesktopIcons"
 				)
-RegisterArrayItems(SaveToINI)
-LoadINI()
 
-;App.NameCutted := "Template`nBigName"
-;Debug := true
-
-
-;ResetSettings       := Settings.Clone()
-
-
-;ResetGeneral        := General.Clone()
-;ResetOSDSettings    := OSDSettings.Clone()
-
-;App.NameCutted := "Template`nBigName"
-;Settings.SplashScreen := "Icon"
-;Debug := true
-;@endregion
-
-
-;@region INI
-SaveToINI.Push("Snippets.SnapWindow", "Snippets.MBVaio", "Snippets.InternetMonitor", "Snippets.AlwaysOnTop", "Snippets.TheLoupe")     ; add more to INI file
-RegisterArrayItems(SaveToINI)
-LoadINI()
+if App.HasOwnProp("GitHubRepo")
+	SaveToINI.Push("App.UpdateAuto", "App.UpdateFrequencyDays", "App.UpdateLastCheck")
+if (IsSet(INIManager) && (SaveToINI != [])) {
+	IsSet(RegisterArrayItems) ? RegisterArrayItems(SaveToINI) : 0
+	IsSet(LoadINI) ? LoadINI() : 0
+}
 ;@endregion
