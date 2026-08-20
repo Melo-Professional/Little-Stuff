@@ -3,14 +3,14 @@
 /************************************************************************
  * @description A bundle of little snippets, because Power Toys sucks.
  * @author Melo (melo@meloprofessional.com)
- * @date 2026/08/18
+ * @date 2026/08/19
  * @releasedate 2026/06/06
- * @version 1.7.3.101
+ * @version 1.7.3.104
  ***********************************************************************/
 
 AppName := "Little Stuff"
 ;@Ahk2Exe-Let U_AppName = %A_PriorLine%
-AppVersion := "1.7.3.101"
+AppVersion := "1.7.3.104"
 ;@Ahk2Exe-Let U_Version = %A_PriorLine%
 AppDescription := "A bundle of little snippets, because Power Toys sucks."
 ;@endregion
@@ -436,6 +436,16 @@ $#d:: {
         for hwnd in visibleWindowsOnMonitor {
             try WinMinimize("ahk_id " hwnd)
         }
+
+		try {
+			if WinExist("ahk_class WorkerW") {
+				WinActivate("ahk_class WorkerW")
+				ControlFocus("SysListView321", "ahk_class WorkerW")
+			} else if WinExist("ahk_class Progman") {
+				WinActivate("ahk_class Progman")
+				ControlFocus("SysListView321", "ahk_class Progman")
+			}
+		}
     }
 }
 ;@endregion
