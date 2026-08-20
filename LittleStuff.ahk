@@ -5,12 +5,12 @@
  * @author Melo (melo@meloprofessional.com)
  * @date 2026/08/20
  * @releasedate 2026/06/06
- * @version 1.8.0.0
+ * @version 1.8.0.100
  ***********************************************************************/
 
 AppName := "Little Stuff"
 ;@Ahk2Exe-Let U_AppName = %A_PriorLine%
-AppVersion := "1.8.0.0"
+AppVersion := "1.8.0.100"
 ;@Ahk2Exe-Let U_Version = %A_PriorLine%
 AppDescription := "A bundle of little snippets, because Power Toys sucks."
 ;@endregion
