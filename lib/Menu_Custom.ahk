@@ -18,6 +18,8 @@ Menu_Custom() {
 
     try MoreMenu.Delete("Pause")
 
+    Snippets_Menu.Insert(,"Integreity Check", (*) => IntegrityCheck())
+
     Item := "Mouse Crosshair"
     Snippets_Menu.Insert(, Item, MouseCrossHairHandler)
     if (Snippets.MouseCrossHair){

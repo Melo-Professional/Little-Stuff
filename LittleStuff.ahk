@@ -3,14 +3,14 @@
 /************************************************************************
  * @description A bundle of little snippets, because Power Toys sucks.
  * @author Melo (melo@meloprofessional.com)
- * @date 2026/08/19
+ * @date 2026/08/20
  * @releasedate 2026/06/06
- * @version 1.7.3.104
+ * @version 1.8.0.0
  ***********************************************************************/
 
 AppName := "Little Stuff"
 ;@Ahk2Exe-Let U_AppName = %A_PriorLine%
-AppVersion := "1.7.3.104"
+AppVersion := "1.8.0.0"
 ;@Ahk2Exe-Let U_Version = %A_PriorLine%
 AppDescription := "A bundle of little snippets, because Power Toys sucks."
 ;@endregion
@@ -62,6 +62,8 @@ A_HotkeyInterval := 1000
 #Include <SnapDragResize>
 #Include <MouseCrosshair>
 #Include <DesktopIcons>
+#Include <_SelectFileOrFolder>
+#Include <IntegrityCheck>
 #Include *i .\.private\zzz_Melo_LittleStuff.ahk
 #Include *i <Help>
 
