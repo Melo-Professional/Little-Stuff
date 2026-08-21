@@ -1,8 +1,13 @@
-﻿#Requires AutoHotkey v2.0
+﻿/************************************************************************
+ * @description Compare two paths 2-ways with hashes
+ * @author Melo (melo@meloprofessional.com)
+ * @date 2026/08/20
+ * @version 1.2.100
+ ***********************************************************************/
+
+#Requires AutoHotkey v2.0
 
 ;#Include _SelectFileOrFolder.ahk
-; Launch the GUI function
-;IntegrityCheck()
 
 IntegrityCheck() {
     ; ==========================================================================
@@ -46,17 +51,29 @@ IntegrityCheck() {
     mainGui.AddText("vTxtAlgo x20 y92 w90", "Algorithm:")
     ddlAlgo := mainGui.AddDropDownList("vDDLAlgo x120 y88 w150 Choose1", ["SHA-256", "SHA-512", "SHA-384", "SHA-1", "MD5"])
 
-    ; Result Filter Selector
-    mainGui.AddText("vTxtFilter x290 y92 w50", "Filter:")
-    ddlFilter := mainGui.AddDropDownList("vDDLFilter x340 y88 w160 Choose1", ["All Results", "Match", "Differ", "Missing"])
+	mainGui.AddText("vTxtFilter x380 y92 w45", "Filters:")
+	chkMatch   := mainGui.AddCheckbox("vChkMatch x+20 y92 Checked", " Match")
+	txtCntMatch := mainGui.AddText("vTxtCntMatch x+3 y92 w50", "(0)")
+
+	chkDiffer  := mainGui.AddCheckbox("vChkDiffer x+5 y92 Checked", " Differ")
+	txtCntDiff  := mainGui.AddText("vTxtCntDiff x+3 y92 w50", "(0)")
+
+	chkMiss    := mainGui.AddCheckbox("vChkMiss x+5 y92 Checked", " Missing")
+	txtCntMiss  := mainGui.AddText("vTxtCntMiss x+3 y92 w50", "(0)")
+
 
     ; GUI Clean Results View
-    lvResults := mainGui.AddListView("vLV x20 y125 w890 h370 +Grid", [
+    lvResults := mainGui.AddListView("vLV x20 y125 w890 h370 -Grid", [
         "Result", 
         "File Name", 
         "#1 Hash", 
         "#2 Hash"
     ])
+
+	lvResults.ModifyCol(1, 150)
+	lvResults.ModifyCol(2, 560)
+	lvResults.ModifyCol(3, 80)
+	lvResults.ModifyCol(4, 80)
 
     ; Bottom Action Controls
     btnExport  := mainGui.AddButton("vBtnExport x20 y510 w120 h32 Disabled", "Export CSV")
@@ -74,7 +91,10 @@ IntegrityCheck() {
     btnCancel.OnEvent("Click", CancelComparison)
     btnExport.OnEvent("Click", ExportCSV)
     btnClose.OnEvent("Click", (*) => mainGui.Destroy())
-    ddlFilter.OnEvent("Change", (*) => ApplyFilter())
+	chkMatch.OnEvent("Click", (*) => ApplyFilter())
+	chkDiffer.OnEvent("Click", (*) => ApplyFilter())
+	chkMiss.OnEvent("Click", (*) => ApplyFilter())
+
 
     lvResults.OnEvent("DoubleClick", CopyRowHashes)
     lvResults.OnEvent("ContextMenu", ShowContextMenu)
@@ -87,6 +107,9 @@ IntegrityCheck() {
     mainGui.OnEvent("DropFiles", HandleDropFiles)
     mainGui.OnEvent("Close", (*) => mainGui.Destroy())
 
+
+    ApplyThemeToGui(mainGui)
+    WatchedGUIs.Push(mainGui)
     mainGui.Show("w930 h600")
 
     ; ==========================================================================
@@ -94,34 +117,51 @@ IntegrityCheck() {
     ; ==========================================================================
 
     GuiSize(thisGui, minMax, guiWidth, guiHeight) {
-        if (minMax = -1)
-            return
+		if (minMax = -1)
+			return
 
-        margin := 20
-        btnWidth := 90
-        labelWidth := 90
-        
-        rightBtnX := guiWidth - margin - btnWidth
-        editX := margin + labelWidth + 10
-        editWidth := rightBtnX - 10 - editX
+		margin := 20
+		btnWidth := 90
+		labelWidth := 90
+		
+		rightBtnX := guiWidth - margin - btnWidth
+		editX := margin + labelWidth + 10
+		editWidth := rightBtnX - 10 - editX
 
-        editPath1.Move(editX, , editWidth)
-        btnBrowse1.Move(rightBtnX)
-        editPath2.Move(editX, , editWidth)
-        btnBrowse2.Move(rightBtnX)
+		editPath1.Move(editX, , editWidth)
+		btnBrowse1.Move(rightBtnX)
+		editPath2.Move(editX, , editWidth)
+		btnBrowse2.Move(rightBtnX)
 
-        lvWidth := guiWidth - (margin * 2)
-        lvHeight := guiHeight - 200
-        if (lvHeight < 100)
-            lvHeight := 100
-        lvResults.Move(margin, 125, lvWidth, lvHeight)
+		lvWidth := guiWidth - (margin * 2)
+		lvHeight := guiHeight - 200
+		if (lvHeight < 100)
+			lvHeight := 100
+		lvResults.Move(margin, 125, lvWidth, lvHeight)
 
-        btnY := guiHeight - 55
-        btnExport.Move(margin, btnY)
-        btnCancel.Move(margin + 130, btnY)
-        btnClose.Move(margin + 250, btnY)
-        btnCompare.Move(guiWidth - margin - 140, btnY)
-    }
+		btnY := guiHeight - 55
+		btnExport.Move(margin, btnY)
+		btnCancel.Move(margin + 130, btnY)
+		btnClose.Move(margin + 250, btnY)
+		btnCompare.Move(guiWidth - margin - 140, btnY)
+
+		; Dynamic Column Sizing:
+		col1 := 150  ; Fixed width for Result
+		col2 := 560  ; Fixed base width for File Name
+		
+		; Reserve 25px for the vertical scrollbar and borders
+		remainingWidth := lvWidth - col1 - col2 - 25
+		
+		; Divide the remaining space equally between Column 3 and Column 4
+		hashColWidth := Floor(remainingWidth / 2)
+		if (hashColWidth < 100)
+			hashColWidth := 100  ; Safety minimum width
+
+		lvResults.ModifyCol(1, col1)
+		lvResults.ModifyCol(2, col2)
+		lvResults.ModifyCol(3, hashColWidth)
+		lvResults.ModifyCol(4, hashColWidth)
+	}
 
     PickPath(editCtrl, pathNum) {
         startPath := (pathNum = 1) ? lastBrowseP1 : lastBrowseP2
@@ -293,25 +333,43 @@ IntegrityCheck() {
         })
     }
 
-    ApplyFilter() {
-        lvResults.Delete()
-        filterVal := ddlFilter.Text
+	ApplyFilter() {
+		lvResults.Delete()
 
-        for item in ComparisonData {
-            if (filterVal = "All Results" 
-                || (filterVal = "Match" && item.Result = "Match")
-                || (filterVal = "Differ" && item.Result = "Differ")
-                || (filterVal = "Missing" && InStr(item.Result, "Missing"))) {
-                
-                lvResults.Add(, item.Result, item.FileName, item.DisplayHash1, item.DisplayHash2)
-            }
-        }
+		showMatch  := chkMatch.Value
+		showDiffer := chkDiffer.Value
+		showMiss   := chkMiss.Value
 
-        lvResults.ModifyCol(1, 130)
-        lvResults.ModifyCol(2, 380)
-        lvResults.ModifyCol(3, 150)
-        lvResults.ModifyCol(4, 150)
-    }
+		cntMatch := 0
+		cntDiffer := 0
+		cntMiss   := 0
+
+		; Calculate counts and filter list entries
+		for item in ComparisonData {
+			if (item.Result = "Match") {
+				cntMatch++
+				if (showMatch)
+					lvResults.Add(, item.Result, item.FileName, item.DisplayHash1, item.DisplayHash2)
+			} else if (item.Result = "Differ") {
+				cntDiffer++
+				if (showDiffer)
+					lvResults.Add(, item.Result, item.FileName, item.DisplayHash1, item.DisplayHash2)
+			} else if InStr(item.Result, "Missing") {
+				cntMiss++
+				if (showMiss)
+					lvResults.Add(, item.Result, item.FileName, item.DisplayHash1, item.DisplayHash2)
+			}
+		}
+
+		; Update count display labels
+		txtCntMatch.Value := "(" cntMatch ")"
+		txtCntDiff.Value  := "(" cntDiffer ")"
+		txtCntMiss.Value  := "(" cntMiss ")"
+
+;		mainGui.GetPos(,, &gW, &gH)
+;		GuiSize(mainGui, 0, gW, gH)
+
+	}
 
     ScanPath(targetPath, pathLabel, algID) {
         files := Map()
@@ -372,15 +430,22 @@ IntegrityCheck() {
             if (row > 0 && row <= lvResults.GetCount()) {
                 res := lvResults.GetText(row, 1)
 
-                bgColor := 0xFFFFFF   ; Default White
                 textColor := 0x000000 ; Black
+                textColor := 0xFFFFFF ; White
 
                 if (res = "Match") {
-                    bgColor := 0xDCF5DC  ; Soft Green (BGR)
+                    bgColor := 0xA0A0A0  ; Gray (BGR)
                 } else if (res = "Differ") {
-                    bgColor := 0xDCDCFF  ; Soft Red (BGR)
+                    ;bgColor := 0x3333FF
+                    ;bgColor := 0x2B2BD0
+                    bgColor := 0x4B1296
                 } else if InStr(res, "Missing") {
-                    bgColor := 0xC7F5FF  ; Soft Yellow/Orange (BGR)
+                    ;bgColor := 0x3399FF
+                    ;bgColor := 0xFF6666
+                    ;bgColor := 0xFF9933
+                    ;bgColor := 0xFF3333
+                    ;bgColor := 0x006BD8
+                    bgColor := 0x157FA6
                 }
 
                 offClrText   := (A_PtrSize = 8) ? 80 : 48

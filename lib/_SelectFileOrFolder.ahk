@@ -2,7 +2,7 @@
  * @description File or Folder Selector
  * @author Melo (melo@meloprofessional.com)
  * @date 2026/08/20
- * @version 1.0.0
+ * @version 1.1.0 (Client GUID, Theme, Colors)
  ***********************************************************************/
 
 #Requires AutoHotkey v2.0
@@ -19,6 +19,7 @@ SelectFileOrFolder(StartPath := "", Title := "Select a file or folder", OwnerHwn
     static IID_IFileDialogControlEvents := "{36116642-D713-4B97-9B83-7484A9D00433}"
     static IID_IFileDialogCustomize := "{E6FDD21A-163F-4975-9C8C-A69F1BA37034}"
     static IID_IShellItem := "{43826D1E-E718-42EE-BC55-A1E261C37BFE}"
+    static CLIENT_GUID := "{A21E31E5-5353-41BF-8F0E-921471378B99}"
 
     static FOS_FORCEFILESYSTEM := 0x40
     static FOS_FILEMUSTEXIST := 0x1000
