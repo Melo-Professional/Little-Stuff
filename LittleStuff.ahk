@@ -3,14 +3,14 @@
 /************************************************************************
  * @description A bundle of little snippets, because Power Toys sucks.
  * @author Melo (melo@meloprofessional.com)
- * @date 2026/08/21
+ * @date 2026/08/25
  * @releasedate 2026/06/06
- * @version 1.8.2.0
+ * @version 1.8.2.105
  ***********************************************************************/
 
 AppName := "Little Stuff"
 ;@Ahk2Exe-Let U_AppName = %A_PriorLine%
-AppVersion := "1.8.2.0"
+AppVersion := "1.8.2.105"
 ;@Ahk2Exe-Let U_Version = %A_PriorLine%
 AppDescription := "A bundle of little snippets, because Power Toys sucks."
 ;@endregion
@@ -143,9 +143,14 @@ InternetConnectivityMonitorStart(){
 
 
 ;@region AlwaysOnTop
-AlwaysOnTopStart()
+#HotIf (Snippets.AlwaysOnTop)
+#!WheelUp:: AOT_Core(-25)
+#!WheelDown:: AOT_Core(25)
+#HotIf
 
-AlwaysOnTopStart() {
+AOTStartOSD()
+
+AOTStartOSD() {
     Global AOTImage
     if !(Snippets.AlwaysOnTop){
         return
@@ -162,26 +167,8 @@ AlwaysOnTopStart() {
     try AOTImage := OSDAOT.SetCellImage(1,1, unpin,,20)
 }
 
-IsAlwaysOnTop(hwnd) {
-    try {
-        exStyle := WinGetExStyle(hwnd)
-        return exStyle & 0x8 ; Returns true if WS_EX_TOPMOST (0x8) flag is active
-    }
-    return false
-}
-
-DrawBorder(hwnd, c, e) {
-    DllCall("dwmapi\DwmSetWindowAttribute", "ptr", hwnd, "int", 34, "int*",
-    e ? (c & 0xFF) << 16 | c & 0xFF00 | c >> 16 & 0xFF : 0xFFFFFFFF, "int", 4)
-}
-
-
-#HotIf (Snippets.AlwaysOnTop)
-#!WheelUp:: AOT_Transparency(-25)
-#!WheelDown:: AOT_Transparency(25)
-#HotIf
 ; --- Core Worker Function ---
-AOT_Transparency(step := 0) {
+AOT_Core(step := 0) {
     Global AOTImage
     MouseGetPos ,, &targetWindow
     
@@ -219,13 +206,14 @@ AOT_Transparency(step := 0) {
             WinSetAlwaysOnTop(1, targetWindow)
             DrawBorder(targetWindow, 0x00FFFF, 1)
             
+			;Location := _Location(targetWindow)
             OSDAOT.ClearCells()
             Try AOTImage := OSDAOT.SetCellImage(1,1, pin,,20)
-            OSDAOT.Show()
+            ;OSDAOT.Show()
+            OSDAOT.Show( , _Location(targetWindow))
             SoundPlayWin("Speech On")
         }
-    } 
-    else { ; --- SCROLL DOWN ---
+    } else { ; --- SCROLL DOWN ---
         if (isAOT) {
             if (currentTrans < 255) {
                 ; Case D: AOT window being brightened back to solid
@@ -246,7 +234,8 @@ AOT_Transparency(step := 0) {
                 } else {
                     OSDAOT.ClearCells()
                     Try AOTImage := OSDAOT.SetCellImage(1,1, unpin,,20)
-                    OSDAOT.Show()
+                    ;OSDAOT.Show()
+                    OSDAOT.Show( , _Location(targetWindow))
                 }
                 SoundPlayWin("Speech Sleep")
             }
@@ -256,10 +245,29 @@ AOT_Transparency(step := 0) {
             try WinSetTransparent(newTrans, targetWindow)
         }
     }
+
+	IsAlwaysOnTop(hwnd) {
+		try {
+			exStyle := WinGetExStyle(hwnd)
+			return exStyle & 0x8 ; Returns true if WS_EX_TOPMOST (0x8) flag is active
+		}
+		return false
+	}
+
+	DrawBorder(hwnd, c, e) {
+		DllCall("dwmapi\DwmSetWindowAttribute", "ptr", hwnd, "int", 34, "int*",
+		e ? (c & 0xFF) << 16 | c & 0xFF00 | c >> 16 & 0xFF : 0xFFFFFFFF, "int", 4)
+	}
+
+	_Location(hwnd) {
+		WinGetPos &winX, &winY, &winW, &winH, hwnd
+		paddingX := DPIScale(-30)
+		paddingY := DPIScale(20)
+		targetX_px := winX + winW + paddingX
+		targetY_px := winY + paddingY
+		return Format("x" targetX_px " y" targetY_px)
+	}
 }
-
-
-
 ;@endregion
 
 
@@ -409,17 +417,26 @@ $#d:: {
     }
 
     ; 3. Decision Logic
-    hasStoredHiddenWindows := False
-    if (HiddenWindows[targetMonitor].Length > 0) {
-        for storedHwnd in HiddenWindows[targetMonitor] {
-            if WinExist("ahk_id " storedHwnd) && (WinGetMinMax("ahk_id " storedHwnd) == -1) {
-                hasStoredHiddenWindows := True
-                break
+    ; IF VISIBLE WINDOWS EXIST: Always minimize them first
+    if (visibleWindowsOnMonitor.Length > 0) {
+        HiddenWindows[targetMonitor] := visibleWindowsOnMonitor
+        
+        for hwnd in visibleWindowsOnMonitor {
+            try WinMinimize("ahk_id " hwnd)
+        }
+
+        try {
+            if WinExist("ahk_class WorkerW") {
+                WinActivate("ahk_class WorkerW")
+                ControlFocus("SysListView321", "ahk_class WorkerW")
+            } else if WinExist("ahk_class Progman") {
+                WinActivate("ahk_class Progman")
+                ControlFocus("SysListView321", "ahk_class Progman")
             }
         }
-    }
-
-    if (hasStoredHiddenWindows) {
+    } 
+    ; IF NO VISIBLE WINDOWS: Check if we have stored windows to restore
+    else if (HiddenWindows[targetMonitor].Length > 0) {
         Loop HiddenWindows[targetMonitor].Length {
             hwnd := HiddenWindows[targetMonitor][HiddenWindows[targetMonitor].Length - A_Index + 1]
             if WinExist("ahk_id " hwnd) {
@@ -431,23 +448,6 @@ $#d:: {
             }
         }
         HiddenWindows[targetMonitor] := []
-    } 
-    else if (visibleWindowsOnMonitor.Length > 0) {
-        HiddenWindows[targetMonitor] := visibleWindowsOnMonitor
-        
-        for hwnd in visibleWindowsOnMonitor {
-            try WinMinimize("ahk_id " hwnd)
-        }
-
-		try {
-			if WinExist("ahk_class WorkerW") {
-				WinActivate("ahk_class WorkerW")
-				ControlFocus("SysListView321", "ahk_class WorkerW")
-			} else if WinExist("ahk_class Progman") {
-				WinActivate("ahk_class Progman")
-				ControlFocus("SysListView321", "ahk_class Progman")
-			}
-		}
     }
 }
 ;@endregion

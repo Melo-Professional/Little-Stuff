@@ -117,7 +117,7 @@ Menu_Custom() {
         Snippets.AlwaysOnTop := !Snippets.AlwaysOnTop
         Snippets.AlwaysOnTop? Snippets_Menu.Check(ItemName) : Snippets_Menu.Uncheck(ItemName)
         SaveINI()
-        AlwaysOnTopStart()
+        AOTStartOSD()
     }
 
 
@@ -135,7 +135,7 @@ Menu_Custom() {
     }
 
 
-    Item := "Toggle Desktop Icons"
+    Item := "Toggle Desktop Icons `tDouble LeftClick"
     Snippets_Menu.Insert(, Item, DesktopIconsHandler)
     if (Snippets.DesktopIcons){
     Snippets_Menu.Check(Item)

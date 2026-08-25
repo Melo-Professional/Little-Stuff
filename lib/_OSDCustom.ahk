@@ -1,6 +1,6 @@
 /************************************************************************
  * @description OSDCustom (Dynamic Styling & Multi-Column Grid Engine)
- * @version 6.21.0 (Mouse Position and Rounded Corners fix, progressbar marquee)
+ * @version 6.22.0 (Absolute coordinates for Positioning)
  ***********************************************************************/
 
 #Requires AutoHotkey v2.0
@@ -24,7 +24,7 @@ class OSDCustom {
     static FontSize := 11
     static TimeOut := 1800
     static Speed := 4
-    static Position := "x0.50 y0.50" ; options: "x<Percentage> y<Percentage>" | "mouse" for current mouse position
+    static Position := "x0.50 y0.50" ; options: "x-300 y500" (absolute coordinates accepting negative values) || "x0.5 y0.5" (between 0 and 1 for percentage of the monitor) || "mouse" for current mouse position
     static SlideDistance := 30
     static FontName := "Segoe UI"
     static FontWeight := 400
@@ -619,9 +619,8 @@ class OSDCustom {
 
         monLeft := 0, monTop := 0, monRight := 0, monBottom := 0
         targetMonIndex := 1
-
-        ; Ensure mouse position uses absolute screen coordinates
-        CoordMode("Mouse", "Screen")
+		isAbsoluteX := false
+        isAbsoluteY := false
 
         ; Check if Position is explicitly set to "Mouse"
         if (StrLower(Position) == "mouse") {
@@ -652,15 +651,42 @@ class OSDCustom {
         monWidth := monRight - monLeft
         monHeight := monBottom - monTop
 
-        ; Only calculate default/ratio targetX/Y if Position wasn't "Mouse"
         if (StrLower(Position) != "mouse") {
             targetX := monLeft + (monWidth * 0.5)
             targetY := monTop + (monHeight * 0.5)
-            if RegExMatch(Position, "i)x([\d\.]+)", &matchX) {
-                targetX := monLeft + (monWidth * Float(matchX[1]))
+
+            if RegExMatch(Position, "i)x([-\d\.]+)", &matchX) {
+                valX := Float(matchX[1])
+                if (valX >= 0 && valX <= 1) {
+                    targetX := monLeft + (monWidth * valX)
+                } else {
+                    targetX := valX
+                    isAbsoluteX := true
+                }
             }
-            if RegExMatch(Position, "i)y([\d\.]+)", &matchY) {
-                targetY := monTop + (monHeight * Float(matchY[1]))
+
+            if RegExMatch(Position, "i)y([-\d\.]+)", &matchY) {
+                valY := Float(matchY[1])
+                if (valY >= 0 && valY <= 1) {
+                    targetY := monTop + (monHeight * valY)
+                } else {
+                    targetY := valY
+                    isAbsoluteY := true
+                }
+            }
+
+            ; --- If absolute coordinates were given, locate the correct monitor for bounds/animations ---
+            if (isAbsoluteX || isAbsoluteY) {
+                loop MonitorGetCount() {
+                    MonitorGet(A_Index, &mLeft, &mTop, &mRight, &mBottom)
+                    if (targetX >= mLeft && targetX < mRight && targetY >= mTop && targetY < mBottom) {
+                        targetMonIndex := A_Index
+                        monLeft := mLeft, monTop := mTop, monRight := mRight, monBottom := mBottom
+                        monWidth := monRight - monLeft
+                        monHeight := monBottom - monTop
+                        break
+                    }
+                }
             }
         }
 
@@ -668,8 +694,19 @@ class OSDCustom {
         scaledSlide := OSDCustom.DPIScale(this.SlideDistance)
         this.ActualSpeed := OSDCustom.DPIScale(this.Speed)
 
-        this.PosX := Max(monLeft, Min(targetX - Integer(guiWidth / 2), monRight - guiWidth))
-        this.FinalY := Max(monTop, Min(targetY - Integer(guiHeight / 2), monBottom - guiHeight))
+        ; --- Only clamp if using relative percentages; allow absolute coords to escape boundaries ---
+		if (isAbsoluteX) {
+            this.PosX := Integer(targetX - (guiWidth / 2))
+        } else {
+            this.PosX := Max(monLeft, Min(targetX - Integer(guiWidth / 2), monRight - guiWidth))
+        }
+
+        if (isAbsoluteY) {
+            this.FinalY := Integer(targetY - (guiHeight / 2))
+        } else {
+            this.FinalY := Max(monTop, Min(targetY - Integer(guiHeight / 2), monBottom - guiHeight))
+        }
+
         this.IsBottomHalf := (this.FinalY >= (monTop + (monHeight / 2) - guiHeight / 2))
         this.StartY := this.IsBottomHalf ? (this.FinalY + scaledSlide) : (this.FinalY - scaledSlide)
         this.AlphaStep := (scaledSlide > 0) ? (this.Opacity / (scaledSlide / this.ActualSpeed)) : this.Opacity

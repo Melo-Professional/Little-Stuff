@@ -1,8 +1,8 @@
 /************************************************************************
  * @description QOL helper functions
  * @author Melo (melo@meloprofessional.com) and Pj
- * @date 2026/08/18
- * @version 1.1.0
+ * @date 2026/08/21
+ * @version 1.1.0 (Added Class OnFocusGain and Class OnFocusLoss)
  ***********************************************************************/
 
 
@@ -364,5 +364,110 @@ SoundPlayWin(audiofile := "Windows Notify", timer := 5000) {
     ReleaseFile() {
         ; Passing 0 as the path cleanly stops playback and releases file handles
         try DllCall("Winmm.dll\PlaySoundW", "Ptr", 0, "Ptr", 0, "UInt", 0x0)
+    }
+}
+
+/**
+ * @description {@link OnFocusGain|_HelperFuncs.ahk}
+ * Triggers a callback when a target window transitions from INACTIVE to ACTIVE.
+ * @param {String} WinTitle
+ * The window title or criteria (e.g., "ahk_class Shell_TrayWnd", "ahk_exe notepad.exe").
+ * @param {Func} Callback
+ * The function to execute when focus is gained. Receives the gained window's HWND as its first parameter.
+ * @returns {Void}
+ * @example <caption>Trigger an action when Notepad gains focus</caption>
+ * OnFocusGain("ahk_exe notepad.exe", NotepadGainedFocus)
+ * 
+ * NotepadGainedFocus(hwnd) {
+ *     SoundBeep(750, 100)
+ * }
+ */
+Class OnFocusGain {
+    static Callbacks := Map()
+
+    static __New() {
+        Persistent()
+        
+        DllCall("user32\SetWinEventHook",
+            "UInt", 0x0003, ; EVENT_SYSTEM_FOREGROUND
+            "UInt", 0x0003,
+            "Ptr", 0,
+            "Ptr", CallbackCreate(this.OnFocusChanged.Bind(this), "F"),
+            "UInt", 0,
+            "UInt", 0,
+            "UInt", 0)
+    }
+
+    ; Register a WinTitle and its corresponding callback function
+    static Call(WinTitle, Callback) {
+        this.Callbacks[WinTitle] := Callback
+    }
+
+    static OnFocusChanged(*) {
+        CurrentActive := WinExist("A")
+        if (!CurrentActive)
+            return
+
+        ; Check if the CURRENT active window matches any registered target
+        for WinTitle, Callback in this.Callbacks {
+            if WinExist(WinTitle " ahk_id " CurrentActive) {
+                try Callback.Call(CurrentActive)
+            }
+        }
+    }
+}
+
+/**
+ * @description {@link OnFocusLoss|_HelperFuncs.ahk}
+ * Triggers a callback when a target window transitions from ACTIVE to INACTIVE.
+ * @param {String} WinTitle
+ * The window title or criteria (e.g., "ahk_class Shell_TrayWnd", "ahk_exe notepad.exe").
+ * @param {Func} Callback
+ * The function to execute when focus is lost. Receives the lost window's HWND as its first parameter.
+ * @returns {Void}
+ * @example <caption>Trigger an action when the Windows Taskbar loses focus</caption>
+ * OnFocusLoss("ahk_class Shell_TrayWnd", TaskbarLostFocus)
+ * 
+ * TaskbarLostFocus(hwnd) {
+ *     ToolTip("Taskbar lost focus! HWND: " hwnd)
+ *     SetTimer(() => ToolTip(), -2000)
+ * }
+ */
+Class OnFocusLoss {
+    static Callbacks := Map()
+    static PrevActive := 0
+
+    static __New() {
+        this.PrevActive := WinExist("A")
+        Persistent()
+        
+        DllCall("user32\SetWinEventHook",
+            "UInt", 0x0003, ; EVENT_SYSTEM_FOREGROUND
+            "UInt", 0x0003,
+            "Ptr", 0,
+            "Ptr", CallbackCreate(this.OnFocusChanged.Bind(this), "F"),
+            "UInt", 0,
+            "UInt", 0,
+            "UInt", 0)
+    }
+
+    ; Register a WinTitle and its corresponding callback function
+    static Call(WinTitle, Callback) {
+        this.Callbacks[WinTitle] := Callback
+    }
+
+    static OnFocusChanged(*) {
+        CurrentActive := WinExist("A")
+        if (this.PrevActive = CurrentActive)
+            return
+
+        ; Check if the PREVIOUS active window matched any registered target
+        for WinTitle, Callback in this.Callbacks {
+            if (this.PrevActive && WinExist(WinTitle " ahk_id " this.PrevActive)) {
+                try Callback.Call(this.PrevActive)
+            }
+        }
+
+        this.PrevActive := CurrentActive
     }
 }

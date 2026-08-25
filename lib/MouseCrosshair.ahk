@@ -20,9 +20,10 @@ class MouseCrosshair {
         ; --- Your Preferred Configuration ---
         cfgColor       := "0xC4FFFB00" ; ARGB Format
         cfgColor       := "0xdcff00bf" ; ARGB Format
+        cfgColor       := "0xdcff7b00" ; ARGB Format
         cfgThickness   := 3
         cfgSize        := 14
-        cfgEnds        := 2            ; 4 = full cross (+), 2 = partial line (| or -)
+        cfgEnds        := 4            ; 4 = full cross (+), 2 = partial line (| or -)
         cfgOrientation := "vertical"   ; if partial, "horizontal" or "vertical"
         cfgCenterGap   := 10
         ; ------------------------------------

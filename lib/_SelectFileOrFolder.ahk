@@ -2,7 +2,7 @@
  * @description File or Folder Selector
  * @author Melo (melo@meloprofessional.com)
  * @date 2026/08/20
- * @version 1.1.0 (Client GUID, Theme, Colors)
+ * @version 1.1.0 (Client GUID)
  ***********************************************************************/
 
 #Requires AutoHotkey v2.0
