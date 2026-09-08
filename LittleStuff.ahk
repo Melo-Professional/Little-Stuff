@@ -3,14 +3,14 @@
 /************************************************************************
  * @description A bundle of little snippets, because Power Toys sucks.
  * @author Melo (melo@meloprofessional.com)
- * @date 2026/09/03
+ * @date 2026/09/08
  * @releasedate 2026/06/06
- * @version 1.8.3.0
+ * @version 1.9.0.0
  ***********************************************************************/
 
 AppName := "Little Stuff"
 ;@Ahk2Exe-Let U_AppName = %A_PriorLine%
-AppVersion := "1.8.3.0"
+AppVersion := "1.9.0.0"
 ;@Ahk2Exe-Let U_Version = %A_PriorLine%
 AppDescription := "A bundle of little snippets, because Power Toys sucks."
 ;@endregion

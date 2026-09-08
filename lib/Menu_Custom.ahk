@@ -149,6 +149,64 @@ Menu_Custom() {
     }
 
 
+    Links_Menu := Menu()
+    A_TrayMenu.Links_Menu := Links_Menu
+    TrayMenu.Insert("More", "Links", Links_Menu)
+
+	Links_Menu.Insert(,,)
+	Links_Menu.Add("CONTROL PANEL", (*) => TrayMenu.Show())
+	Links_Menu.Disable("Control Panel")
+	Links_Menu.Insert(,,)
+
+	Links_Menu.Insert(,"Control Panel", (*) => Run('shell:::{21EC2020-3AEA-1069-A2DD-08002B30309D}'))
+	Links_Menu.Insert(,"God Mode", (*) => Run('shell:::{ED7BA470-8E54-465E-825C-99712043E01C}'))
+	Links_Menu.Insert(,"Devices and Printers", (*) => Run('shell:::{A8A91A66-3A7D-4424-8D24-04E180695C7A}'))
+	Links_Menu.Insert(,"Networks", (*) => Run('shell:::{7007ACC7-3202-11D1-AAD2-00805FC1270E}'))
+	Links_Menu.Insert(,"Sounds", (*) => Run('shell:::{F8278025-320C-4048-B821-419747A9E533}'))
+
+	Links_Menu.Insert(,,)
+	Links_Menu.Insert(,"SYSTEM", (*) => TrayMenu.Show())
+	Links_Menu.Disable("SYSTEM")
+	Links_Menu.Insert(,,)
+
+	Links_Menu.Insert(,"System Configuration", (*) => Run('msconfig.exe'))
+	Links_Menu.Insert(,"Advanced", (*) => Run('SystemPropertiesAdvanced.exe'))
+	Links_Menu.Insert(,"About", (*) => Run('shell:::{BB06C0E4-D293-4f75-8A90-CB05B6477EEE}'))
+	Links_Menu.Insert(,"Manage Known Networks", (*) => Run('ms-settings:network-wifisettings'))
+
+	Links_Menu.Insert(,,)
+	Links_Menu.Insert(,"SYSADMIN", (*) => TrayMenu.Show())
+	Links_Menu.Disable("SYSADMIN")
+	Links_Menu.Insert(,,)
+
+	Links_Menu.Insert(,"Device Manager", (*) => Run('devmgmt.msc'))
+	Links_Menu.Insert(,"Disk Management", (*) => Run('diskmgmt.msc'))
+	Links_Menu.Insert(,"Services", (*) => Run('services.msc'))
+	Links_Menu.Insert(,"Task Scheduler", (*) => Run('taskschd.msc'))
+	Links_Menu.Insert(,"Local Users and Groups", (*) => Run('lusrmgr.msc'))
+	Links_Menu.Insert(,"Legacy User Accounts", (*) => Run('netplwiz.exe'))
+	Links_Menu.Insert(,"Group Policy Editor", (*) => Run('gpedit.msc'))
+	Links_Menu.Insert(,"Event Viewer", (*) => Run('eventvwr.msc'))
+	Links_Menu.Insert(,"Firewall", (*) => Run('wf.msc'))
+	Links_Menu.Insert(,"Reliability History", (*) => Run('perfmon /rel'))
+	Links_Menu.Insert(,"Microsoft Management Console", (*) => Run('mmc.exe'))
+	Links_Menu.Insert(,"Power Plans", (*) => Run('shell:::{025A5937-A6BE-4686-A844-36FE4BEC8B6D}'))
+
+
+	Links_Menu.Insert(,,)
+	Links_Menu.Insert(,"USER", (*) => TrayMenu.Show())
+	Links_Menu.Disable("USER")
+	Links_Menu.Insert(,,)
+
+	Links_Menu.Insert(,"Startup", (*) => Run('shell:Startup'))
+	Links_Menu.Insert(,"AppData", (*) => Run('shell:AppData'))
+	Links_Menu.Insert(,"Local Appdata", (*) => Run('shell:Local AppData'))
+	Links_Menu.Insert(,"User Profile", (*) => Run('shell:Profile'))
+	Links_Menu.Insert(,"Apps Folder", (*) => Run('shell:AppsFolder'))
+	Links_Menu.Insert(,"Recycle Bin", (*) => Run('shell:::{645FF040-5081-101B-9F08-00AA002F954E}'))
+
+
+	TrayMenu.Insert("More")
 
     ; Custom items
 /*
