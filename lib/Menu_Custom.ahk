@@ -162,7 +162,8 @@ Menu_Custom() {
 	Links_Menu.Insert(,"God Mode", (*) => Run('shell:::{ED7BA470-8E54-465E-825C-99712043E01C}'))
 	Links_Menu.Insert(,"Devices and Printers", (*) => Run('shell:::{A8A91A66-3A7D-4424-8D24-04E180695C7A}'))
 	Links_Menu.Insert(,"Networks", (*) => Run('shell:::{7007ACC7-3202-11D1-AAD2-00805FC1270E}'))
-	Links_Menu.Insert(,"Sounds", (*) => Run('shell:::{F8278025-320C-4048-B821-419747A9E533}'))
+	;Links_Menu.Insert(,"Sounds", (*) => Run('shell:::{F8278025-320C-4048-B821-419747A9E533}'))
+	Links_Menu.Insert(,"Sounds", (*) => Run('mmsys.cpl'))
 
 	Links_Menu.Insert(,,)
 	Links_Menu.Insert(,"SYSTEM", (*) => TrayMenu.Show())
@@ -188,10 +189,9 @@ Menu_Custom() {
 	Links_Menu.Insert(,"Group Policy Editor", (*) => Run('gpedit.msc'))
 	Links_Menu.Insert(,"Event Viewer", (*) => Run('eventvwr.msc'))
 	Links_Menu.Insert(,"Firewall", (*) => Run('wf.msc'))
-	Links_Menu.Insert(,"Reliability History", (*) => Run('perfmon /rel'))
-	Links_Menu.Insert(,"Microsoft Management Console", (*) => Run('mmc.exe'))
+	Links_Menu.Insert(,"Reliability History", (*) => Run('perfmon.exe /rel'))
+	Links_Menu.Insert(,"Microsoft Management Console", (*) => RunTry('mmc.exe'))
 	Links_Menu.Insert(,"Power Plans", (*) => Run('shell:::{025A5937-A6BE-4686-A844-36FE4BEC8B6D}'))
-
 
 	Links_Menu.Insert(,,)
 	Links_Menu.Insert(,"USER", (*) => TrayMenu.Show())
@@ -227,6 +227,12 @@ Menu_Custom() {
 ;    try MoreMenu.Delete("Suspend")
 ;    try MoreMenu.Delete("Pause")
 ;    }
+
+
+	RunTry(command, *) {
+		try Run(command)
+	}
+
 
     IsFunctionDefined(Name) {
         try return HasMethod(%Name%)

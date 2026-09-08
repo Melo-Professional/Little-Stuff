@@ -1,8 +1,8 @@
 /************************************************************************
  * @description QOL helper functions
  * @author Melo (melo@meloprofessional.com) and Pj
- * @date 2026/09/03
- * @version 1.3.9 (LoadImageMap & LoadResourcePNG)
+ * @date 2026/09/08
+ * @version 1.3.10 (ReloadClean with user's environment)
  ***********************************************************************/
 
 
@@ -45,18 +45,26 @@ ReloadClean(args*) {
         }
     }
 
-    if DllCall("userenv\CreateEnvironmentBlock", "Ptr*", &lpEnv:=0, "Ptr",0, "Int",0) {
-        si := Buffer(siSize := A_PtrSize == 8 ? 104 : 68, 0), NumPut("UInt", siSize, si)
-        pi := Buffer(A_PtrSize == 8 ? 24 : 16, 0)
-        cmd := (A_IsCompiled ? '"' A_ScriptFullPath '" /force' : '"' A_AhkPath '" /force "' A_ScriptFullPath '"') argString
+    ; Get current process token to build the current user's environment block
+    hToken := 0
+    if DllCall("advapi32\OpenProcessToken", "Ptr", DllCall("GetCurrentProcess", "Ptr"), "UInt", 0x0008, "Ptr*", &hToken) {
+		lpEnv := 0
+        ; Pass hToken (instead of 0) so it generates the logged-in user's environment block
+        if DllCall("userenv\CreateEnvironmentBlock", "Ptr*", &lpEnv, "Ptr", hToken, "Int", 0) {
+            si := Buffer(siSize := A_PtrSize == 8 ? 104 : 68, 0), NumPut("UInt", siSize, si)
+            pi := Buffer(A_PtrSize == 8 ? 24 : 16, 0)
+            cmd := (A_IsCompiled ? '"' A_ScriptFullPath '" /force' : '"' A_AhkPath '" /force "' A_ScriptFullPath '"') argString
 
-        if DllCall("CreateProcessW", "Ptr",0, "Str",cmd, "Ptr",0, "Ptr",0, "Int",0, "UInt",0x400, "Ptr",lpEnv, "Ptr",0, "Ptr",si, "Ptr",pi)
-            ExitApp()
-        DllCall("userenv\DestroyEnvironmentBlock", "Ptr", lpEnv)
+            if DllCall("CreateProcessW", "Ptr", 0, "Str", cmd, "Ptr", 0, "Ptr", 0, "Int", 0, "UInt", 0x0400, "Ptr", lpEnv, "Ptr", 0, "Ptr", si, "Ptr", pi) {
+                DllCall("CloseHandle", "Ptr", hToken)
+                ExitApp()
+            }
+            DllCall("userenv\DestroyEnvironmentBlock", "Ptr", lpEnv)
+        }
+        DllCall("CloseHandle", "Ptr", hToken)
     }
     Reload()
 }
-
 
 /**
  * @description {@link ReloadWithArgs|_HelperFuncs.ahk}

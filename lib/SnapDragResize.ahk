@@ -14,7 +14,7 @@ if !IsSet(Snippets){
     }
 }
 
-#HotIf (Snippets.SnapWindow || Snippets.KDE_Drag)
+#HotIf (Snippets.SnapWindow || Snippets.KDE_Drag) && !WinActive("ahk_exe acad.exe")
 
 ; 1. INTERCEPT AND BLOCK NATIVE MBUTTON CLICK DOWN
 MButton::
