@@ -12,7 +12,7 @@ App.GitHubRepo := "https://github.com/Melo-Professional/Little-Stuff"
 
 Snippets := {
     SnapWindow:				true,
-    MBVaio:					false,
+;    MBVaio:					false,
     InternetMonitor:		true,
     AlwaysOnTop:			true,
     TheLoupe:				true,
@@ -37,8 +37,14 @@ Settings.SplashScreen := "Icon"
 ;@region INI
 SaveToINI := []
 ;SaveToINI.Push("Settings.SplashScreen")     ; add more to INI file
-SaveToINI.Push("Snippets.SnapWindow", "Snippets.MBVaio", "Snippets.InternetMonitor", "Snippets.AlwaysOnTop", "Snippets.TheLoupe")     ; add more to INI file
-SaveToINI.Push("Settings.DesiredTheme", "Snippets.SnapWindow", "Snippets.MBVaio",
+;SaveToINI.Push("Snippets.SnapWindow", "Snippets.MBVaio", "Snippets.InternetMonitor", "Snippets.AlwaysOnTop", "Snippets.TheLoupe")     ; add more to INI file
+;SaveToINI.Push("Settings.DesiredTheme", "Snippets.SnapWindow", "Snippets.MBVaio",
+;                "Snippets.InternetMonitor", "Snippets.AlwaysOnTop", "Snippets.TheLoupe",
+;                "Snippets.KDE_Drag", "Snippets.MouseCrossHair", "Snippets.CicleTabsWheel",
+;				"Snippets.DesktopIcons"
+;				)
+
+SaveToINI.Push("Settings.DesiredTheme", "Snippets.SnapWindow", 
                 "Snippets.InternetMonitor", "Snippets.AlwaysOnTop", "Snippets.TheLoupe",
                 "Snippets.KDE_Drag", "Snippets.MouseCrossHair", "Snippets.CicleTabsWheel",
 				"Snippets.DesktopIcons"

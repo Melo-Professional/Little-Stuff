@@ -1,8 +1,8 @@
 /************************************************************************
  * @description QOL helper functions
  * @author Melo (melo@meloprofessional.com) and Pj
- * @date 2026/09/08
- * @version 1.3.10 (ReloadClean with user's environment)
+ * @date 2026/09/11
+ * @version 1.4.0 (_Debug Tooltips as serial notifications)
  ***********************************************************************/
 
 
@@ -504,8 +504,8 @@ Class OnFocusLoss {
 * result := _Debug(CalculateTotal(10, 20))
 */
 _Debug(val := "[CHECKPOINT]", mode := "ToolTip", duration := 6000) {
-	if !IsSet(Debug) || !Debug
-		return
+    if !IsSet(Debug) || !Debug
+        return
 
     ; 1. Inspect caller stack frame (-1 gets caller details)
     caller := Error("", -1)
@@ -526,18 +526,64 @@ _Debug(val := "[CHECKPOINT]", mode := "ToolTip", duration := 6000) {
     }
     
     if (mode = "ToolTip" || mode = "Both") {
-        static tipID := 2
-        currentID := tipID
+        static activeTips := Map()
         
-        ; Display ToolTip at mouse cursor position
-        MouseGetPos(&x, &y)
-        ToolTip(Format("LINE {1} ({2}):`n{3}", line, fn, formattedVal), x + 15, y + 15, currentID)
+        ; Find an available ToolTip ID (1 through 20)
+        currentID := 2
+        while activeTips.Has(currentID) && currentID <= 20
+            currentID++
+        if (currentID > 20)
+            currentID := 2
+
+        ; Detect Monitor Work Area for the current screen containing the cursor
+        CoordMode("ToolTip", "Screen")
+        CoordMode("Mouse", "Screen")
+        MouseGetPos(&mX, &mY)
         
-        ; Clear tooltip automatically after specified duration
-        SetTimer () => ToolTip(,,, currentID), -Abs(duration)
+        monIndex := 1
+        loop MonitorGetCount() {
+            MonitorGetWorkArea(A_Index, &mLeft, &mTop, &mRight, &mBottom)
+            if (mX >= mLeft && mX <= mRight && mY >= mTop && mY <= mBottom) {
+                monIndex := A_Index
+                break
+            }
+        }
+        MonitorGetWorkArea(monIndex, &mLeft, &mTop, &mRight, &mBottom)
+
+        ; Calculate vertical offset below the lowest active ToolTip
+        gap := 8
+        margin := 10
+        startY := mTop + margin
         
-        ; Rotate IDs between 1 and 20 to allow multiple floating tips simultaneously
-        tipID := (tipID >= 20) ? 2 : tipID + 1
+        if (activeTips.Count > 0) {
+            maxBottom := 0
+            for id, tip in activeTips {
+                bottom := tip.yPos + tip.height
+                if (bottom > maxBottom)
+                    maxBottom := bottom
+            }
+            startY := maxBottom + gap
+        }
+
+        ; Format string and calculate estimated height based on text lines
+        tooltipText := Format("LINE {1} ({2}):`n{3}", line, fn, formattedVal)
+        lineCount   := StrSplit(tooltipText, "`n").Length
+        estimatedHeight := 20 + (lineCount * 18)
+
+        xPos := mRight * 0.9
+
+        ; Record active ToolTip state
+        activeTips[currentID] := { yPos: startY, height: estimatedHeight }
+
+        ; Display ToolTip and set auto-cleanup timer
+        ToolTip(tooltipText, xPos, startY, currentID)
+        SetTimer(() => _ClearTip(currentID), -Abs(duration))
+
+        _ClearTip(id) {
+            ToolTip(,,, id)
+            if activeTips.Has(id)
+                activeTips.Delete(id)
+        }
     }
     
     if (mode = "OutputDebug") {
@@ -546,22 +592,22 @@ _Debug(val := "[CHECKPOINT]", mode := "ToolTip", duration := 6000) {
     
     return val
 
-	_Stringify(obj) {
-		if !IsObject(obj)
-			return String(obj)
-		
-		str := ""
-		if obj is Array {
-			for idx, item in obj
-				str .= (A_Index > 1 ? ", " : "") . _Stringify(item)
-			return "[" str "]"
-		} else if obj is Map {
-			for k, v in obj
-				str .= (A_Index > 1 ? ", " : "") . k ": " . _Stringify(v)
-			return "Map(" str ")"
-		}
-		return Object.Prototype.ToString.Call(obj)
-	}
+    _Stringify(obj) {
+        if !IsObject(obj)
+            return String(obj)
+        
+        str := ""
+        if obj is Array {
+            for idx, item in obj
+                str .= (A_Index > 1 ? ", " : "") . _Stringify(item)
+            return "[" str "]"
+        } else if obj is Map {
+            for k, v in obj
+                str .= (A_Index > 1 ? ", " : "") . k ": " . _Stringify(v)
+            return "Map(" str ")"
+        }
+        return Object.Prototype.ToString.Call(obj)
+    }
 }
 
 

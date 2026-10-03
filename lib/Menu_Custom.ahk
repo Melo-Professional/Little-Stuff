@@ -77,7 +77,7 @@ Menu_Custom() {
     }
 
 
-    Item := "KDE Drag & Resize`tMButton+Click+Drag"
+    Item := "KDE Drag && Resize`tMButton+Click+Drag"
     Snippets_Menu.Insert(, Item, KDE_DragHandler)
     if (Snippets.KDE_Drag){
     Snippets_Menu.Check(Item)

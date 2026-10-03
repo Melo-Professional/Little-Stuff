@@ -242,10 +242,13 @@ HandleMButtonRelease() {
     ; Scenario A: You pressed MButton, tapped a direction button, but released WITHOUT dragging -> SNAP WINDOW
     if (Snippets.SnapWindow && !HasMoved && (ActiveMode == 3 || ActiveMode == 4)) {
         WinActivate "ahk_id " KDE_id 
-        if (ActiveMode == 3)
+        if (ActiveMode == 3) {
             Send "#+{Left}"
-        else if (ActiveMode == 4)
+	        SoundPlayWin(A_ScriptDir "\assets\audios\blop_left.wav")
+		} else if (ActiveMode == 4) {
             Send "#+{Right}"
+    	    SoundPlayWin(A_ScriptDir "\assets\audios\blop_right.wav")
+		}
             
     ; Scenario B: You activated Drag Mode and dragged past the threshold -> CHECK FOR EDGE MAXIMIZE
     } else if (ActiveMode == 1 && HasMoved && Snippets.KDE_Drag) {

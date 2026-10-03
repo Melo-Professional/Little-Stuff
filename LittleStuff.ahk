@@ -3,14 +3,14 @@
 /************************************************************************
  * @description A bundle of little snippets, because Power Toys sucks.
  * @author Melo (melo@meloprofessional.com)
- * @date 2026/09/08
+ * @date 2026/10/03
  * @releasedate 2026/06/06
- * @version 1.9.0.102
+ * @version 1.9.0.104
  ***********************************************************************/
 
 AppName := "Little Stuff"
 ;@Ahk2Exe-Let U_AppName = %A_PriorLine%
-AppVersion := "1.9.0.102"
+AppVersion := "1.9.0.104"
 ;@Ahk2Exe-Let U_Version = %A_PriorLine%
 AppDescription := "A bundle of little snippets, because Power Toys sucks."
 ;@endregion
@@ -64,7 +64,6 @@ A_HotkeyInterval := 1000
 #Include <DesktopIcons>
 #Include <_SelectFileOrFolder>
 #Include <IntegrityCheck>
-#Include *i .\.private\zzz_Melo_LittleStuff.ahk
 #Include *i <Help>
 
 ;@endregion
@@ -84,9 +83,8 @@ IsSet(StartAutoUpdater) ? StartAutoUpdater() : 0
 ;@endregion
 ;@endregion
 
-if IsSet(Menu_Custom2) && priv{
-    Menu_Custom2()
-}
+#Include *i .\.private\zzz_Melo_LittleStuff.ahk
+
 ;throw Error('Message', A_ThisFunc, )
 ;a := "test"
 ;OutputDebug(a) ; debug tab
