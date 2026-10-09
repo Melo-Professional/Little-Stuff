@@ -20,6 +20,7 @@ Snippets := {
     MouseCrossHair:			false,
     CicleTabsWheel:			false,
     DesktopIcons:			true,
+	WrongCaps:				true
 }
 
 ;ResetSettings       := Settings.Clone()
@@ -47,7 +48,7 @@ SaveToINI := []
 SaveToINI.Push("Settings.DesiredTheme", "Snippets.SnapWindow", 
                 "Snippets.InternetMonitor", "Snippets.AlwaysOnTop", "Snippets.TheLoupe",
                 "Snippets.KDE_Drag", "Snippets.MouseCrossHair", "Snippets.CicleTabsWheel",
-				"Snippets.DesktopIcons"
+				"Snippets.DesktopIcons", "Snippets.WrongCaps"
 				)
 
 if App.HasOwnProp("GitHubRepo")

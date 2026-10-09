@@ -3,14 +3,14 @@
 /************************************************************************
  * @description A bundle of little snippets, because Power Toys sucks.
  * @author Melo (melo@meloprofessional.com)
- * @date 2026/10/03
+ * @date 2026/10/09
  * @releasedate 2026/06/06
- * @version 1.9.0.105
+ * @version 1.9.0.106
  ***********************************************************************/
 
 AppName := "Little Stuff"
 ;@Ahk2Exe-Let U_AppName = %A_PriorLine%
-AppVersion := "1.9.0.105"
+AppVersion := "1.9.0.106"
 ;@Ahk2Exe-Let U_Version = %A_PriorLine%
 AppDescription := "A bundle of little snippets, because Power Toys sucks."
 ;@endregion
@@ -457,7 +457,7 @@ $#d:: {
 *   WARN wRONG cAPS
 */
 global activeIH := ""
-#HotIf GetKeyState("CapsLock", "T")
+#HotIf (Snippets.WrongCaps) && GetKeyState("CapsLock", "T")
 ~Shift:: {
     global activeIH
     if (activeIH is InputHook && activeIH.InProgress) {

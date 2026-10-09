@@ -149,6 +149,20 @@ Menu_Custom() {
     }
 
 
+    Item := "wRONG cAPS `tCaps + Shift + (Typing)"
+    Snippets_Menu.Insert(, Item, WrongCapsHandler)
+    if (Snippets.WrongCaps){
+    Snippets_Menu.Check(Item)
+    }
+
+    WrongCapsHandler(ItemName, ItemPos, MyMenu){
+        global Snippets
+        Snippets.WrongCaps := !Snippets.WrongCaps
+        Snippets.WrongCaps? Snippets_Menu.Check(ItemName) : Snippets_Menu.Uncheck(ItemName)
+        SaveINI()
+    }
+
+
     Links_Menu := Menu()
     A_TrayMenu.Links_Menu := Links_Menu
     TrayMenu.Insert("More", "Links", Links_Menu)

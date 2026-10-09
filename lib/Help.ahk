@@ -61,9 +61,9 @@ ShowHelpGUI() {
     ; --- TAB 1 CONTENT: WINDOW MANAGEMENT ---
     ; ==========================================
     Group1.Push(AddSectionHeader(MyGui, "Always On Top and Transparency", contentWidth, fontSizeExtraBig, colors, "x50 y80"))
-    for ctrl in AddHotkeyRow(MyGui, "Alt + WheelUp", "AOT on + transparency.", contentWidth, fontSizeBig, fontSizeMedium, colors, "x55 y130")
+    for ctrl in AddHotkeyRow(MyGui, "Win + Alt + WheelUp", "AOT on + transparency.", contentWidth, fontSizeBig, fontSizeMedium, colors, "x55 y130")
         Group1.Push(ctrl)
-    for ctrl in AddHotkeyRow(MyGui, "Win+ Alt + WheelDown", "AOT off + transparency.", contentWidth, fontSizeBig, fontSizeMedium, colors, "x55 y165")
+    for ctrl in AddHotkeyRow(MyGui, "Win + Alt + WheelDown", "AOT off + transparency.", contentWidth, fontSizeBig, fontSizeMedium, colors, "x55 y165")
         Group1.Push(ctrl)
     
     Group1.Push(AddSectionHeader(MyGui, "Snap, Drag and Resize", contentWidth, fontSizeExtraBig, colors, "x50 y230"))
@@ -97,13 +97,15 @@ ShowHelpGUI() {
     for ctrl in AddHotkeyRow(MyGui, "Hover Titlebar + Wheel", "Scroll through tabs in Chrome, Firefox, File Explorer, etc.", contentWidth, fontSizeBig, fontSizeMedium, colors, "x55 y130")
         Group3.Push(ctrl)
     
-    Group3.Push(AddSectionHeader(MyGui, "System Utilities and Fixes", contentWidth, fontSizeExtraBig, colors, "x50 y195"))
+    Group3.Push(AddSectionHeader(MyGui, "wRONG cAPS", contentWidth, fontSizeExtraBig, colors, "x50 y195"))
     for ctrl in AddHotkeyRow(MyGui, "Caps + Shift + (Typing)", "Triggers warning alert if CapsLock is accidentally active.", contentWidth, fontSizeBig, fontSizeMedium, colors, "x55 y245")
         Group3.Push(ctrl)
-    for ctrl in AddHotkeyRow(MyGui, "Ctrl + Alt + C", "Triggers the 'Compare' action palette sequence in VSCodium.", contentWidth, fontSizeBig, fontSizeMedium, colors, "x55 y280")
+    
+    Group3.Push(AddSectionHeader(MyGui, "System Utilities and Fixes", contentWidth, fontSizeExtraBig, colors, "x50 y310"))
+    for ctrl in AddHotkeyRow(MyGui, "Ctrl + Alt + C", "Triggers the 'Compare' action palette sequence in VSCodium.", contentWidth, fontSizeBig, fontSizeMedium, colors, "x55 y360")
         Group3.Push(ctrl)
 
-    for ctrl in AddHotkeyRow(MyGui, "Desktop double click", "Toggles desktop icons visibility.", contentWidth, fontSizeBig, fontSizeMedium, colors, "x55 y315")
+    for ctrl in AddHotkeyRow(MyGui, "Desktop double click", "Toggles desktop icons visibility.", contentWidth, fontSizeBig, fontSizeMedium, colors, "x55 y395")
         Group3.Push(ctrl)
 
     AllHelpGuiGroups := [Group1, Group2, Group3]
