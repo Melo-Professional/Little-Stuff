@@ -3,14 +3,14 @@
 /************************************************************************
  * @description A bundle of little snippets, because Power Toys sucks.
  * @author Melo (melo@meloprofessional.com)
- * @date 2026/10/09
+ * @date 2026/10/12
  * @releasedate 2026/06/06
- * @version 1.9.0.106
+ * @version 1.9.1.0
  ***********************************************************************/
 
 AppName := "Little Stuff"
 ;@Ahk2Exe-Let U_AppName = %A_PriorLine%
-AppVersion := "1.9.0.106"
+AppVersion := "1.9.1.0"
 ;@Ahk2Exe-Let U_Version = %A_PriorLine%
 AppDescription := "A bundle of little snippets, because Power Toys sucks."
 ;@endregion
@@ -278,37 +278,40 @@ AOT_Core(step := 0) {
 #HotIf 
 
 LoupeHandler(direction) {
-    static loupefactor := 1.5
-    static loupesize := 600
-    loupefactorsteps := 1.5
-    loupesizesteps := 1.1
+    InitialSize	:= 700
+    SizeSteps	:= 0.95
+    MagnfSteps	:= 1.2
+	BorderSize	:= 3
+	BorderColor	:= "00ffff"
 
-    if (direction = -1) && (loupefactor <=2)
+    static currentMagnfSteps := MagnfSteps
+    static currentSize := InitialSize
+
+    if (direction = -1) && (currentMagnfSteps <= MagnfSteps)
         return
 
-    if (loupefactor == 1.5)
+    if (currentMagnfSteps == MagnfSteps)
         SoundPlayWin(A_ScriptDir "\assets\audios\on_260702.wav")
 
     if (direction = 1) {
-        loupefactor *= loupefactorsteps
-        loupesize   *= loupesizesteps
+        currentMagnfSteps *= MagnfSteps
+        currentSize   *= SizeSteps
     } else if (direction = -1) {
-        loupefactor /= loupefactorsteps
-        loupesize   /= loupesizesteps
+        currentMagnfSteps /= MagnfSteps
+        currentSize   /= SizeSteps
     }
 
-    loupesize := Round(loupesize)
+    currentSize := Round(currentSize)
 
-    if (loupefactor <= 1.5) {
+    if (currentMagnfSteps <= MagnfSteps) {
         SoundPlayWin(A_ScriptDir "\assets\audios\off_260702.wav")
-        loupefactor := 1.5
-        loupesize := 600
+        currentMagnfSteps := MagnfSteps
+        currentSize := InitialSize
         Loupe.Stop()
         return
     }
 
-    Loupe.Magnify(loupesize, loupefactor, 1, "00ffff")
-;    Tooltip("Factor: " . loupefactor . "`nSize: " . loupesize)
+    Loupe.Magnify(currentSize, currentMagnfSteps, BorderSize, BorderColor)
 }
 ;@endregion
 
