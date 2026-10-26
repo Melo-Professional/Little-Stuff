@@ -39,7 +39,7 @@ Settings.SplashScreen := "Icon"
 SaveToINI := []
 ;SaveToINI.Push("Settings.SplashScreen")     ; add more to INI file
 ;SaveToINI.Push("Snippets.SnapWindow", "Snippets.MBVaio", "Snippets.InternetMonitor", "Snippets.AlwaysOnTop", "Snippets.TheLoupe")     ; add more to INI file
-;SaveToINI.Push("Settings.DesiredTheme", "Snippets.SnapWindow", "Snippets.MBVaio",
+;SaveToINI.Push("Settings.DesiredTheme", "Snippets.SnapWindow", "Snippets.MeloMBVaio",
 ;                "Snippets.InternetMonitor", "Snippets.AlwaysOnTop", "Snippets.TheLoupe",
 ;                "Snippets.KDE_Drag", "Snippets.MouseCrossHair", "Snippets.CicleTabsWheel",
 ;				"Snippets.DesktopIcons"

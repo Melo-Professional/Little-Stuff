@@ -1,8 +1,8 @@
 /************************************************************************
  * @description QOL helper functions
  * @author Melo (melo@meloprofessional.com) and Pj
- * @date 2026/09/11
- * @version 1.4.0 (_Debug Tooltips as serial notifications)
+ * @date 2026/10/26
+ * @version 1.4.1 (ObjToString description fix)
  ***********************************************************************/
 
 
@@ -716,7 +716,7 @@ GuiAtTray(GuiObj, TrayIconHandlerObj, &spawnX, &spawnY, &w, &h) {
 
 
 /**
- * @description {@link GuiAtTray|_HelperFuncs.ahk}
+ * @description {@link ObjToString|_HelperFuncs.ahk}
  * Parse an object into strings to easy visualization of data
  * @param obj 
  * The Object to parse
