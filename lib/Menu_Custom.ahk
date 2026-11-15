@@ -178,6 +178,8 @@ Menu_Custom() {
 	Links_Menu.Insert(,"Networks", (*) => Run('shell:::{7007ACC7-3202-11D1-AAD2-00805FC1270E}'))
 	;Links_Menu.Insert(,"Sounds", (*) => Run('shell:::{F8278025-320C-4048-B821-419747A9E533}'))
 	Links_Menu.Insert(,"Sounds", (*) => Run('mmsys.cpl'))
+	Links_Menu.Insert(,"Volume Mixer Classic", (*) => Run('sndvol.exe'))
+	Links_Menu.Insert(,"Volume Mixer Modern", (*) => Run('ms-settings:apps-volume'))
 
 	Links_Menu.Insert(,,)
 	Links_Menu.Insert(,"SYSTEM", (*) => TrayMenu.Show())
